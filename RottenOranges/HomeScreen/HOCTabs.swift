@@ -59,7 +59,7 @@ class HOCTabs: UITabBarController, UITabBarControllerDelegate {
                     } else {
                         role = "User"
                     }
-                    
+                    print(userDetails)
                     
                     // Assign user details to variables
                     var userProfile = Profile(
@@ -71,6 +71,7 @@ class HOCTabs: UITabBarController, UITabBarControllerDelegate {
                         phone: 1234567890,
                         role: role,
                         tags: followedCritics,
+                        rating: userDetails["rating"] as? Double ?? 0.0,
                         address1: "",
                         address2: "",
                         address3: ""
@@ -101,7 +102,7 @@ class HOCTabs: UITabBarController, UITabBarControllerDelegate {
                     if let image = item.image {
                         item.image = image.withRenderingMode(.alwaysOriginal)
                         item.selectedImage = image.withRenderingMode(.alwaysOriginal)
-                        item.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.red], for: .selected) 
+                        item.setTitleTextAttributes([NSAttributedString.Key.foregroundColor: UIColor.red], for: .selected)
                     }
                 }
             }

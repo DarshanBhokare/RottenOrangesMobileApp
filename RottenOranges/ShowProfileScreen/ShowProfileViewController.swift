@@ -35,6 +35,7 @@ class ShowProfileViewController: UIViewController {
            let unwrappedPhoneNum = profileInfo.phone,
            let uwRole = profileInfo.role,
            let unwrappedProfileImage = profileInfo.profileImage,
+           let uwRating = profileInfo.rating,
            let unwrappedPhoneType = profileInfo.phoneType,
            let unwrappedAddress1 = profileInfo.address1,
            let unwrappedAddress2 = profileInfo.address2,
@@ -52,6 +53,8 @@ class ShowProfileViewController: UIViewController {
             if (!profileInfo.tags.isEmpty) {
                 showProfileScreen.labelTags.text = "Expertise: " + "\(profileInfo.tags.joined(separator: ", "))"
             }
+            
+            showProfileScreen.labelRating.text = "Rating: " + "\(uwRating)/10.0"
             
             if (!unwrappedProfileImage.isEmpty) {
                 if let imageUrl = URL(string: unwrappedProfileImage ?? "") {

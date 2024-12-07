@@ -19,6 +19,7 @@ class ExploreTableViewCell: UITableViewCell {
     var labelTags: UILabel!
     var createdByLabel: UILabel!
     var imageProfile: UIImageView!
+    var authorRating: UILabel!
     
     weak var delegate: ExploreTableViewCellDelegate?
     var indexPath: IndexPath?
@@ -72,6 +73,12 @@ class ExploreTableViewCell: UITableViewCell {
         createdByLabel.textColor = .gray
         createdByLabel.translatesAutoresizingMaskIntoConstraints = false
         wrapperCellView.addSubview(createdByLabel)
+        
+        authorRating = UILabel()
+        authorRating.font = UIFont.systemFont(ofSize: 12)
+        authorRating.textColor = .gray
+        authorRating.translatesAutoresizingMaskIntoConstraints = false
+        wrapperCellView.addSubview(authorRating)
     }
 
     func setupFollowButton() {
@@ -129,6 +136,10 @@ class ExploreTableViewCell: UITableViewCell {
                 labelTimestamp.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
                 labelTimestamp.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
 
+                authorRating.topAnchor.constraint(equalTo: followButton.topAnchor, constant: -44),
+                authorRating.bottomAnchor.constraint(equalTo: followButton.topAnchor, constant: -22),
+                authorRating.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+                
                 createdByLabel.topAnchor.constraint(equalTo: followButton.topAnchor, constant: -32),
                 createdByLabel.bottomAnchor.constraint(equalTo: followButton.topAnchor, constant: -10),
                 createdByLabel.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16)
@@ -141,11 +152,22 @@ class ExploreTableViewCell: UITableViewCell {
         }
     }
 
-    func configure(with post: Post, at indexPath: IndexPath) {
+    func configure(with post: Post, author: [String: Any]? = nil, at indexPath: IndexPath) {
+
         labelTitle.text = post.title
         labelTimestamp.text = formatDate(post.timestamp)
         labelTags.text = post.tags.joined(separator: ", ")
-        createdByLabel.text = "Created By \(post.author)"
+        if let author = author {
+            createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
+            if let rating = author["rating"] as? Double {
+                authorRating.text = "Author's Reputation: \(rating)/10.0"
+            } else {
+                authorRating.text = "Author's Reputation: Not Available"
+            }
+        } else {
+            createdByLabel.text = "Created By Unknown Author"
+            authorRating.text = "Author's Reputation: Not Available"
+        }
         if let imageUrl = URL(string: post.image) {
             loadImage(from: imageUrl)
         } else {
@@ -210,6 +232,8 @@ class FeedTableViewCell: UITableViewCell {
     var labelTimestamp: UILabel!
     var createdByLabel: UILabel!
     var imageProfile: UIImageView!
+    
+    var authorRating: UILabel!
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -258,6 +282,12 @@ class FeedTableViewCell: UITableViewCell {
         createdByLabel.textColor = .gray
         createdByLabel.translatesAutoresizingMaskIntoConstraints = false
         wrapperCellView.addSubview(createdByLabel)
+        
+        authorRating = UILabel()
+        authorRating.font = UIFont.systemFont(ofSize: 12)
+        authorRating.textColor = .gray
+        authorRating.translatesAutoresizingMaskIntoConstraints = false
+        wrapperCellView.addSubview(authorRating)
     }
 
     func setupUnfollowButton() {
@@ -288,7 +318,7 @@ class FeedTableViewCell: UITableViewCell {
 
                 imageProfile.topAnchor.constraint(equalTo: wrapperCellView.topAnchor, constant: 8),
                 imageProfile.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
-                imageProfile.widthAnchor.constraint(equalToConstant: 100), 
+                imageProfile.widthAnchor.constraint(equalToConstant: 100),
                 imageProfile.heightAnchor.constraint(equalToConstant: 100),
                 
                 labelTags.topAnchor.constraint(equalTo: imageProfile.bottomAnchor, constant: 8),
@@ -298,18 +328,32 @@ class FeedTableViewCell: UITableViewCell {
                 labelTimestamp.topAnchor.constraint(equalTo: labelTags.bottomAnchor, constant: 8),
                 labelTimestamp.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
                 labelTimestamp.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+                
+                authorRating.topAnchor.constraint(equalTo: labelTimestamp.bottomAnchor, constant: 1),
+                authorRating.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -8),
+                authorRating.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
 
-                createdByLabel.topAnchor.constraint(equalTo: labelTimestamp.bottomAnchor, constant: 8),
+                createdByLabel.topAnchor.constraint(equalTo: labelTimestamp.bottomAnchor, constant: 12),
                 createdByLabel.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
                 createdByLabel.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -16)
             ])
     }
 
-    func configure(with post: Post, at indexPath: IndexPath) {
+    func configure(with post: Post, author: [String: Any]? = nil, at indexPath: IndexPath) {
         labelTitle.text = post.title
         labelTimestamp.text = formatDate(post.timestamp)
         labelTags.text = post.tags.joined(separator: ", ")
-        createdByLabel.text = "Created By \(post.author)"
+        if let author = author {
+            createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
+            if let rating = author["rating"] as? Double {
+                authorRating.text = "Author's Reputation: \(rating)/10.0"
+            } else {
+                authorRating.text = "Author's Reputation: Not Available"
+            }
+        } else {
+            createdByLabel.text = "Created By Unknown Author"
+            authorRating.text = "Author's Reputation: Not Available"
+        }
         if let imageUrl = URL(string: post.image) {
             loadImage(from: imageUrl)
         } else {

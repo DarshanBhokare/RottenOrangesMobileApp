@@ -105,10 +105,25 @@ extension ViewController: UITableViewDataSource,UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Authpost", for: indexPath) as! ExploreTableViewCell
         let post = posts[indexPath.row]
-        cell.configure(with: post, at: indexPath)
-        print(post)
+
+        // Fetch the author details based on post.author
+        AuthModel().getUserByUsername(username: post.author) { userDetails, documentId, error in
+            DispatchQueue.main.async {
+                if let userDetails = userDetails {
+                    // Pass post and author details to the configure method
+                    cell.configure(with: post, author: userDetails, at: indexPath)
+                } else {
+                    // Handle the case where author is not found or there is an error
+                    cell.configure(with: post, author: nil, at: indexPath)
+                    print("Error fetching author details for \(post.author): \(error?.localizedDescription ?? "Unknown error")")
+                }
+            }
+        }
+
         return cell
     }
+
+
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print(self.posts[indexPath.row]);

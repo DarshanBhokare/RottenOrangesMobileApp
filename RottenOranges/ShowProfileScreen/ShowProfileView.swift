@@ -20,6 +20,7 @@ class ShowProfileView: UIView {
     var labelZip: UILabel!
     var buttonEdit: UIButton!
     var buttonLogout: UIButton!
+    var labelRating: UILabel!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -32,6 +33,7 @@ class ShowProfileView: UIView {
         setupLabelRole()
         setupLabelTags()
         setupbuttonLogout()
+        setupLabelRating()
         initConstraints()
     }
     
@@ -68,6 +70,14 @@ class ShowProfileView: UIView {
         labelName.font = UIFont.boldSystemFont(ofSize: 26)
         labelName.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(labelName)
+    }
+    
+    func setupLabelRating(){
+        labelRating = UILabel()
+        labelRating.textColor = .black
+        labelRating.font = UIFont.boldSystemFont(ofSize: 26)
+        labelRating.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(labelRating)
     }
     
     func setupLabelEmail(){
@@ -136,8 +146,11 @@ class ShowProfileView: UIView {
             labelRole.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),
             labelRole.topAnchor.constraint(equalTo: labelEmail.bottomAnchor, constant: 16),
             
+            labelRating.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),
+            labelRating.topAnchor.constraint(equalTo: labelRole.bottomAnchor, constant: 16),
+            
             labelTags.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),
-            labelTags.topAnchor.constraint(equalTo: labelRole.bottomAnchor, constant: 16),
+            labelTags.topAnchor.constraint(equalTo: labelRating.bottomAnchor, constant: 16),
             
             buttonLogout.topAnchor.constraint(equalTo: labelTags.bottomAnchor, constant: 80),
             buttonLogout.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),

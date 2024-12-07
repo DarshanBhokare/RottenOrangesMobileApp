@@ -153,16 +153,29 @@ extension FeedViewController: UITableViewDataSource,UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Authpost", for: indexPath) as! FeedTableViewCell
         
-        if feedViewScreen.searchBar.text?.isEmpty ?? true{
-            let post = posts[indexPath.row] 
-            cell.configure(with: post, at: indexPath)
+        // Determine whether to use posts or filteredPosts
+        let post = (feedViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
+        
+        // Fetch the user by post.author
+        AuthModel().getUserByUsername(username: post.author) { userDetails, documentId, error in
+            if let error = error {
+                // Handle error (e.g., log it or display an alert)
+                print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
+                // Configure the cell with the post only
+                DispatchQueue.main.async {
+                    cell.configure(with: post, author: nil, at: indexPath)
+                }
+            } else if let userDetails = userDetails {
+                // Pass the user details to the configure method
+                DispatchQueue.main.async {
+                    cell.configure(with: post, author: userDetails, at: indexPath)
+                }
+            }
         }
-        else{
-            let post = filteredPosts[indexPath.row]
-            cell.configure(with: post, at: indexPath)
-        }
+        
         return cell
     }
+
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 

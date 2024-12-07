@@ -231,7 +231,7 @@ class RegisterViewController: UIViewController, ObservableObject, UITextFieldDel
                 }
                 
                 // Pass the image data to createUser function
-                self.model.createUser(name: name, email: email, imageData: imageData , role: selectedRole , tags: expertiseTags) { user, error in
+                self.model.createUser(name: name, email: email, imageData: imageData , role: selectedRole , tags: expertiseTags, rating: 0.0, ratingCount: 0) { user, error in
                     if let error = error {
                         self.showAlert(message: "Failed to create user. \(error.localizedDescription)")
                         print("Failed to create user in Firestore: \(error.localizedDescription)")
@@ -259,7 +259,7 @@ class RegisterViewController: UIViewController, ObservableObject, UITextFieldDel
                     self.showAlert(message: "Failed to convert image to data.")
                     return
                 }
-                self.model.createUser(name: name, email: email, imageData: imageData , role: selectedRole, tags: expertiseTags) { user, error in
+                self.model.createUser(name: name, email: email, imageData: imageData , role: selectedRole, tags: expertiseTags, rating: 0.0, ratingCount: 0) { user, error in
                     if let error = error {
                         self.showAlert(message: "Failed to create user. \(error.localizedDescription)")
                         print("Failed to create user in Firestore: \(error.localizedDescription)")

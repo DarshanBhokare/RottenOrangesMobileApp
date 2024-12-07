@@ -84,6 +84,7 @@ class AuthModel {
                         let follows = userData["follows"] as? [String] ?? []
                         let tags = userData["tags"] as? [String] ?? []
                         let profileImageURL = userData["profileImageURL"] as? String ?? ""
+                        let rating = userData["rating"] as? Double? ?? 0
                         
                         // Create a User object with fetched details
                         let user: [String: Any] = [
@@ -92,7 +93,8 @@ class AuthModel {
                             "role": role,
                             "follows" : follows,
                             "tags" : tags,
-                            "profileImageURL": profileImageURL
+                            "profileImageURL": profileImageURL,
+                            "rating": rating
                         ]
                         completion(user, nil)
                     } else {
@@ -109,8 +111,37 @@ class AuthModel {
         }
     }
     
+    func getUserByUsername(username: String, completion: @escaping ([String: Any]?, String?, Error?) -> Void) {
+        let db = Firestore.firestore()
+        
+        // Query Firestore to find the user document using the username field
+        let usersRef = db.collection("users")
+        let query = usersRef.whereField("name", isEqualTo: username)
+        
+        query.getDocuments { (querySnapshot, error) in
+            if let error = error {
+                // Handle error
+                completion(nil, nil, error)
+            } else {
+                // Check if any document matches the query
+                if let document = querySnapshot?.documents.first {
+                    // Document found, return user details and document ID
+                    let userData = document.data()
+                    let documentId = document.documentID
+                    completion(userData, documentId, nil)
+                } else {
+                    // Document not found
+                    let error = NSError(domain: "User document not found", code: 0, userInfo: nil)
+                    completion(nil, nil, error)
+                }
+            }
+        }
+    }
+
+
+    
     // Create a new user in Firestore
-    func createUser(name: String, email: String, imageData: Data?, role: String, tags: [String], completion: @escaping (User?, Error?) -> Void) {
+    func createUser(name: String, email: String, imageData: Data?, role: String, tags: [String], rating: Double, ratingCount: Int, completion: @escaping (User?, Error?) -> Void) {
         let db = Firestore.firestore()
         let storageRef = Storage.storage().reference().child("userImages/\(UUID().uuidString).jpg") // Create a unique filename
         
@@ -121,7 +152,9 @@ class AuthModel {
             "email": email,
             "role": role,
             "follows" : [],
-            "tags" : tags
+            "tags" : tags,
+            "rating" : rating,
+            "ratingCount" : ratingCount
         ]
 
         if let imageData = imageData {

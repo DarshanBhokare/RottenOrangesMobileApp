@@ -16,6 +16,7 @@ struct Profile{
     var phone: Int?
     var role: String?
     var tags: [String]
+    var rating: Double?
     var address1: String?
     var address2: String?
     var address3: String?
@@ -29,6 +30,7 @@ struct Profile{
          phone: Int? = nil,
          role: String? = nil,
          tags: [String] = [],
+         rating: Double? = 0.0,
          address1: String? = nil,
          address2: String? = nil,
          address3: String? = nil) {
@@ -43,6 +45,7 @@ struct Profile{
         self.address1 = address1
         self.address2 = address2
         self.address3 = address3
+        self.rating = rating
     }
     
 }
