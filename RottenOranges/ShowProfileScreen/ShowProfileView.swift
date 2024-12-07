@@ -33,6 +33,7 @@ class ShowProfileView: UIView {
         setupLabelRole()
         setupLabelTags()
         setupbuttonLogout()
+        setupbuttonEdit()
         setupLabelRating()
         initConstraints()
     }
@@ -152,7 +153,11 @@ class ShowProfileView: UIView {
             labelTags.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),
             labelTags.topAnchor.constraint(equalTo: labelRating.bottomAnchor, constant: 16),
             
-            buttonLogout.topAnchor.constraint(equalTo: labelTags.bottomAnchor, constant: 80),
+            buttonEdit.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),
+            buttonEdit.topAnchor.constraint(equalTo: labelTags.bottomAnchor, constant: 16),
+            
+            
+            buttonLogout.topAnchor.constraint(equalTo: buttonEdit.bottomAnchor, constant: 80),
             buttonLogout.centerXAnchor.constraint(equalTo: self.safeAreaLayoutGuide.centerXAnchor),
         ])
     }

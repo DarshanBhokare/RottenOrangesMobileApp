@@ -139,6 +139,25 @@ class AuthModel {
     }
 
 
+    // Function to edit a user's details using documentId
+    func editUser(documentId: String, updatedData: [String: Any], completion: @escaping (Error?) -> Void) {
+        let db = Firestore.firestore()
+        
+        // Reference to the user document by documentId
+        let userRef = db.collection("users").document(documentId)
+        
+        // Update the user document with the provided data
+        userRef.updateData(updatedData) { error in
+            if let error = error {
+                // Return the error if the update fails
+                completion(error)
+            } else {
+                // Return nil if the update is successful
+                completion(nil)
+            }
+        }
+    }
+
     
     // Create a new user in Firestore
     func createUser(name: String, email: String, imageData: Data?, role: String, tags: [String], rating: Double, ratingCount: Int, completion: @escaping (User?, Error?) -> Void) {

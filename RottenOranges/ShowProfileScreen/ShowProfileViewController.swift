@@ -67,6 +67,7 @@ class ShowProfileViewController: UIViewController {
         }
         
         showProfileScreen.buttonLogout.addTarget(self, action: #selector(logoutBtnTapped), for: .touchUpInside)
+        showProfileScreen.buttonEdit.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
     }
     
     @objc func logoutBtnTapped(){
@@ -81,37 +82,12 @@ class ShowProfileViewController: UIViewController {
         }
     }
     
-    func onEditProfile(profile: Profile){
-        if let unwrappedName = profile.name,
-           let unwrappedEmail = profile.email,
-           let unwrappedPhoneNum = profile.phone,
-           let unwrappedProfileImage = profile.profileImage,
-           let unwrappedPhoneType = profile.phoneType,
-           let unwrappedAddress1 = profile.address1,
-           let unwrappedAddress2 = profile.address2,
-           let unwrappedAddress3 = profile.address3 {
-            if !unwrappedName.isEmpty{
-                showProfileScreen.labelName.text = "\(unwrappedName)"
-            }
-            if !unwrappedEmail.isEmpty{
-                showProfileScreen.labelEmail.text = "Email: " + unwrappedEmail
-            }
-            
-            showProfileScreen.labelRole.text = "Phone: " + "\(unwrappedPhoneNum)" + " (\(unwrappedPhoneType))"
-            
-            showProfileScreen.labelAddressHeading.text = "Address:"
-            if !unwrappedAddress1.isEmpty{
-                showProfileScreen.labelAddress1.text = unwrappedAddress1
-            }
-            if !unwrappedAddress2.isEmpty{
-                showProfileScreen.labelAddress2.text = unwrappedAddress2
-            }
-            if !unwrappedAddress3.isEmpty{
-                showProfileScreen.labelZip.text = unwrappedAddress3
-            }
-        }
+    
+    
+    @objc func editButtonTapped(){
         
-        // TODO: Save the changed profile fields
+        let editProfileController = EditProfileViewController(userInfo: profileInfo)
+        navigationController?.pushViewController(editProfileController, animated: true)
         
     }
     
