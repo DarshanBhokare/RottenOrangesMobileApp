@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
 struct Post {
     let title: String
@@ -14,5 +15,6 @@ struct Post {
     let image: String
     let tags: [String]
     let author: String
+    let authorRef: DocumentReference
     let rating: Double
 }
