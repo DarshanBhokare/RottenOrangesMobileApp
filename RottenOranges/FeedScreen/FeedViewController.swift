@@ -18,10 +18,7 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
     override func loadView() {
         view = feedViewScreen
 
-        fetchPosts { [weak self] fetchedPosts in
-                self?.posts = fetchedPosts
-                self?.feedViewScreen.tableView.reloadData()
-        }
+        reloadTableData()
 
     }
     

@@ -253,8 +253,13 @@ class RegisterViewController: UIViewController, ObservableObject, UITextFieldDel
                     }
                 }
             } else {
-                // If no image is picked, register user without image data
-                self.model.createUser(name: name, email: email, imageData: nil , role: selectedRole, tags: expertiseTags) { user, error in
+                // If no image is picked, register user with default image data
+                self.pickedImage = UIImage(systemName: "person")
+                guard let imageData = self.pickedImage!.jpegData(compressionQuality: 0.5) else {
+                    self.showAlert(message: "Failed to convert image to data.")
+                    return
+                }
+                self.model.createUser(name: name, email: email, imageData: imageData , role: selectedRole, tags: expertiseTags) { user, error in
                     if let error = error {
                         self.showAlert(message: "Failed to create user. \(error.localizedDescription)")
                         print("Failed to create user in Firestore: \(error.localizedDescription)")

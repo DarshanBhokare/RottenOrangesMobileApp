@@ -146,10 +146,10 @@ class ExploreTableViewCell: UITableViewCell {
         labelTimestamp.text = formatDate(post.timestamp)
         labelTags.text = post.tags.joined(separator: ", ")
         createdByLabel.text = "Created By \(post.author)"
-        if let imageUrl = URL(string: post.image ?? "") {
+        if let imageUrl = URL(string: post.image) {
             loadImage(from: imageUrl)
         } else {
-            imageProfile.image = UIImage(named: "defaultImage")
+            imageProfile.image = UIImage(systemName: "person")
         }
         
         // Check if the post is followed by the current user
@@ -182,7 +182,7 @@ class ExploreTableViewCell: UITableViewCell {
             guard let data = data, error == nil else {
                 // Set default image if loading fails
                 DispatchQueue.main.async {
-                    self?.imageProfile.image = UIImage(named: "defaultImage")
+                    self?.imageProfile.image = UIImage(systemName: "person")
                 }
                 return
             }
@@ -310,10 +310,10 @@ class FeedTableViewCell: UITableViewCell {
         labelTimestamp.text = formatDate(post.timestamp)
         labelTags.text = post.tags.joined(separator: ", ")
         createdByLabel.text = "Created By \(post.author)"
-        if let imageUrl = URL(string: post.image ?? "") {
+        if let imageUrl = URL(string: post.image) {
             loadImage(from: imageUrl)
         } else {
-            imageProfile.image = UIImage(named: "defaultImage")
+            imageProfile.image = UIImage(systemName: "person")
         }
     }
 
@@ -322,7 +322,7 @@ class FeedTableViewCell: UITableViewCell {
             guard let data = data, error == nil else {
                 // Set default image if loading fails
                 DispatchQueue.main.async {
-                    self?.imageProfile.image = UIImage(named: "defaultImage")
+                    self?.imageProfile.image = UIImage(systemName: "person")
                 }
                 return
             }

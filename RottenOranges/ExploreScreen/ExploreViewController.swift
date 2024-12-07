@@ -17,10 +17,7 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
     override func loadView() {
         view = exploreViewScreen
         
-        fetchPosts { [weak self] fetchedPosts in
-                self?.posts = fetchedPosts
-                self?.exploreViewScreen.tableView.reloadData()
-        }
+        reloadTableData()
         
     }
     
@@ -130,12 +127,6 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
                     if let error = error {
                         print("Error fetching current user details: \(error.localizedDescription)")
                         return
-                    }
-                    // Configure cell with current user's details
-                    for (index, post) in posts.enumerated() {
-                        if let cell = self.exploreViewScreen.tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? ExploreTableViewCell {
-                            cell.configure(with: post, at: IndexPath(row: index, section: 0))
-                        }
                     }
                 }
             }
