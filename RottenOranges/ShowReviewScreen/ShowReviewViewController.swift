@@ -48,7 +48,7 @@ class ShowReviewViewController: UIViewController {
         
         let db = Firestore.firestore()
 
-        AuthModel().getUserByUsername(username: review.author) { (userDetails, documentId, error) in
+        AuthModel().getUserByDocumentReference(userRef: review.authorRef) { (userDetails, documentId, error) in
             if let error = error{
                 // Handle error
                 print("Error fetching user details: \(error.localizedDescription)")
