@@ -283,13 +283,13 @@ class FeedTableViewCell: UITableViewCell {
                 wrapperCellView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
 
                 labelTitle.topAnchor.constraint(equalTo: wrapperCellView.topAnchor, constant: 12),
-                labelTitle.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
+                labelTitle.leadingAnchor.constraint(equalTo: imageProfile.trailingAnchor, constant: 64),
                 labelTitle.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
 
-                imageProfile.topAnchor.constraint(equalTo: labelTitle.bottomAnchor, constant: 8),
+                imageProfile.topAnchor.constraint(equalTo: wrapperCellView.topAnchor, constant: 8),
                 imageProfile.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
-                imageProfile.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
-                imageProfile.heightAnchor.constraint(equalToConstant: 200),
+                imageProfile.widthAnchor.constraint(equalToConstant: 100), 
+                imageProfile.heightAnchor.constraint(equalToConstant: 100),
                 
                 labelTags.topAnchor.constraint(equalTo: imageProfile.bottomAnchor, constant: 8),
                 labelTags.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),

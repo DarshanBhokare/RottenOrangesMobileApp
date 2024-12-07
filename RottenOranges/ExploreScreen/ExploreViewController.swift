@@ -174,12 +174,16 @@ extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
         // Check if search text is empty
         if exploreViewScreen.searchBar.text?.isEmpty ?? true {
             // If search text is empty, use posts array
-            print(self.posts[indexPath.row])
+            displayReview(review: posts[indexPath.row])
         } else {
             // If search text is not empty, use filteredPosts array
-            print(self.filteredPosts[indexPath.row])
+            displayReview(review: filteredPosts[indexPath.row])
         }
-        // Perform any actions you need when a row is selected
+    }
+    
+    private func displayReview(review: Post) {
+        let showReviewController = ShowReviewViewController(review: review)
+        self.navigationController?.pushViewController(showReviewController, animated: true)
     }
 }
 
