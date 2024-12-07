@@ -74,6 +74,10 @@ class ViewController: UIViewController {
                     let imageUrl = data["image"] as? String ?? ""
                     let tags = data["tags"] as? [String] ?? []
                     let author = data["author"] as? String ?? ""
+                    guard let authorRef = data["authorRef"] as? DocumentReference else {
+                        print("Skipping post '\(title)' due to missing authorRef.")
+                        continue
+                    }
                     let rating = data["rating"] as? Double ?? 0.0
                     
                     let post = Post(
@@ -83,6 +87,7 @@ class ViewController: UIViewController {
                         image: imageUrl,
                         tags: tags,
                         author: author,
+                        authorRef: authorRef,
                         rating: rating
                     )
                     posts.append(post)
@@ -107,7 +112,7 @@ extension ViewController: UITableViewDataSource,UITableViewDelegate {
         let post = posts[indexPath.row]
 
         // Fetch the author details based on post.author
-        AuthModel().getUserByUsername(username: post.author) { userDetails, documentId, error in
+        AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
             DispatchQueue.main.async {
                 if let userDetails = userDetails {
                     // Pass post and author details to the configure method
