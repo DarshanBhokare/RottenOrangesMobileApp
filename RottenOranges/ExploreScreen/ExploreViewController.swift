@@ -115,7 +115,11 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
                 let tags = data["tags"] as? [String] ?? []
                 let author = data["author"] as? String ?? ""
                 let rating = data["rating"] as? Double ?? 0.0
-                let post = Post(title: title, content: content, timestamp: timestamp, image: imageUrl, tags:tags, author:author, rating: rating)
+                guard let authorRef = data["authorRef"] as? DocumentReference else {
+                    print("Skipping post '\(title)' due to missing authorRef.")
+                    continue
+                }
+                let post = Post(title: title, content: content, timestamp: timestamp, image: imageUrl, tags:tags, author:author, authorRef: authorRef, rating: rating)
                 posts.append(post)
                 
                 dispatchGroup.enter()
@@ -159,7 +163,7 @@ extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
         let post = (exploreViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
         
         // Fetch the user by post.author
-        AuthModel().getUserByUsername(username: post.author) { userDetails, documentId, error in
+        AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
             if let error = error {
                 // Handle error (e.g., log it or display an alert)
                 print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
