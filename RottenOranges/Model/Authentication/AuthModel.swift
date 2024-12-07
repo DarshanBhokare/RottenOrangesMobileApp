@@ -138,7 +138,25 @@ class AuthModel {
         }
     }
 
+    func getUserByDocumentReference(userRef: DocumentReference, completion: @escaping ([String: Any]?, String?, Error?) -> Void) {
+        userRef.getDocument { document, error in
+            if let error = error {
+                // Handle error
+                completion(nil, nil, error)
+            } else if let document = document, document.exists {
+                // Document found, return user details and document ID
+                let userData = document.data()
+                let documentId = document.documentID
+                completion(userData, documentId, nil)
+            } else {
+                // Document not found
+                let error = NSError(domain: "User document not found", code: 0, userInfo: nil)
+                completion(nil, nil, error)
+            }
+        }
+    }
 
+    
     // Function to edit a user's details using documentId
     func editUser(documentId: String, updatedData: [String: Any], completion: @escaping (Error?) -> Void) {
         let db = Firestore.firestore()
