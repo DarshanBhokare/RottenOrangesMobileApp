@@ -25,6 +25,8 @@ class RegisterView: UIView {
     
     var roleLabel: UILabel!
     
+    var emailFieldTopConstraint: NSLayoutConstraint!
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -97,7 +99,7 @@ class RegisterView: UIView {
     
     func setupbuttonSelectRoleType(){
         buttonSelectRoleType = UIButton(type: .system)
-        buttonSelectRoleType.setTitle("Critic", for: .normal)
+        buttonSelectRoleType.setTitle("User", for: .normal)
         buttonSelectRoleType.showsMenuAsPrimaryAction = true
         buttonSelectRoleType.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(buttonSelectRoleType)
@@ -170,8 +172,21 @@ class RegisterView: UIView {
             fatalError("init(coder:) has not been implemented")
     }
     
+    func updatePickerVisibility(isVisible: Bool){
+        suggestionsPickerView.isHidden = !isVisible
+        
+        emailFieldTopConstraint.constant = isVisible ? 120 : 20
+        
+        UIView.animate(withDuration: 0.3) {
+            self.layoutIfNeeded()
+        }
+    }
+    
     
     func initConstraints(){
+        
+        emailFieldTopConstraint = emailField.topAnchor.constraint(equalTo: expertiseTagsView.bottomAnchor, constant: 20)
+        
         NSLayoutConstraint.activate([
             
             imageView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
@@ -218,7 +233,7 @@ class RegisterView: UIView {
             expertiseTagsView.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             
             
-            emailField.topAnchor.constraint(equalTo: expertiseTagsView.bottomAnchor, constant: 20),
+            emailFieldTopConstraint,
             emailField.leadingAnchor.constraint(equalTo: nameField.leadingAnchor),
             emailField.trailingAnchor.constraint(equalTo: nameField.trailingAnchor),
             

@@ -34,7 +34,7 @@ class RegisterViewController: UIViewController, ObservableObject, UITextFieldDel
                        "Kids"
     ]
     var expertiseTags: [String] = []
-    var selectedRoleType: String? {
+    var selectedRoleType: String? = "User" {
         didSet {
             guard let selectedRole = selectedRoleType else { return }
             
@@ -75,6 +75,7 @@ class RegisterViewController: UIViewController, ObservableObject, UITextFieldDel
         
         registerScreen.buttonSelectRoleType.menu = getMenuTypes()
         registerScreen.buttonTakePhoto.menu = getMenuImagePicker()
+        registerScreen.showExpertiseTagComponents(false)
         
     }
     
@@ -108,13 +109,13 @@ class RegisterViewController: UIViewController, ObservableObject, UITextFieldDel
         // Reload the data of the picker view
         registerScreen.suggestionsPickerView.reloadAllComponents()
         
-        // Show the picker view
-        registerScreen.suggestionsPickerView.isHidden = false
+        // Show the picker view and update layout
+        registerScreen.updatePickerVisibility(isVisible: true)
     }
 
     func hideSuggestions() {
-        // Hide the picker view
-        registerScreen.suggestionsPickerView.isHidden = true
+        // Hide the picker view and update layout
+        registerScreen.updatePickerVisibility(isVisible: false)
     }
     
     
