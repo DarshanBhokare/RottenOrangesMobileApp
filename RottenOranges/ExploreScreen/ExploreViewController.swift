@@ -28,11 +28,33 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
         title = "Explore"
         navigationItem.hidesBackButton = true
         
+        
+        
+//        exploreViewScreen.tableView.delegate = self
+//        exploreViewScreen.tableView.dataSource = self
+//        exploreViewScreen.searchBar.delegate = self
+        
+        initSetup()
+        setupTableView()
+       
+    }
+    
+    func initSetup()
+    {
+        self.reloadTableData()
+        
+        exploreViewScreen.tableView.reloadData()
+        
         exploreViewScreen.tableView.delegate = self
         exploreViewScreen.tableView.dataSource = self
         exploreViewScreen.searchBar.delegate = self
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Ensure table view delegate and data source are reassigned
         
-       
+        initSetup()
     }
     
     func reloadTableData() {
@@ -103,6 +125,11 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
     
     private func setupTableView() {
         exploreViewScreen.tableView.register(ExploreTableViewCell.self, forCellReuseIdentifier: "Authpost")
+        // Enable dynamic row height
+        exploreViewScreen.tableView.rowHeight = UITableView.automaticDimension
+           
+        // Set an estimated row height (optional, helps with performance)
+        exploreViewScreen.tableView.estimatedRowHeight = 150
     }
     
     

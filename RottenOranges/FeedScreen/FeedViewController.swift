@@ -26,19 +26,38 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
         title = "Feed"
         navigationItem.hidesBackButton = true
         
+//        feedViewScreen.tableView.delegate = self
+//        feedViewScreen.tableView.dataSource = self
+//        feedViewScreen.searchBar.delegate = self
+        
+        initSetup()
+        setupTableView()
+//        reloadTableData() // Load data initially
+    }
+    
+    func initSetup()
+    {
+        self.reloadTableData()
+        
+        feedViewScreen.tableView.reloadData()
+        
         feedViewScreen.tableView.delegate = self
         feedViewScreen.tableView.dataSource = self
         feedViewScreen.searchBar.delegate = self
-        
-        setupTableView()
-        reloadTableData() // Load data initially
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         // Ensure table view delegate and data source are reassigned
-        feedViewScreen.tableView.delegate = self
-        feedViewScreen.tableView.dataSource = self
+        
+//        self.reloadTableData()
+//        
+//        feedViewScreen.tableView.reloadData()
+//        
+//        feedViewScreen.tableView.delegate = self
+//        feedViewScreen.tableView.dataSource = self
+        
+        initSetup()
     }
     
     func reloadTableData() {

@@ -26,6 +26,7 @@ class ExploreTableViewCell: UITableViewCell {
     weak var delegate: ExploreTableViewCellDelegate?
     var indexPath: IndexPath?
     var post: Post?
+    
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
