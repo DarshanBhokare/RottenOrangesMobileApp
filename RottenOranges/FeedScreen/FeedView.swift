@@ -50,17 +50,20 @@ class FeedView: UIView {
 
     
     func initConstraints() {
-           NSLayoutConstraint.activate([
-            
+        let tabBarHeight: CGFloat = 24 
+        
+        NSLayoutConstraint.activate([
+            // Search bar constraints
             searchBar.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 30),
             searchBar.leadingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             searchBar.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 24 ),
-            
+            // Table view constraints
+            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 24),
             tableView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
-           ])
+            tableView.bottomAnchor.constraint(equalTo: self.safeAreaLayoutGuide.bottomAnchor, constant: -tabBarHeight)
+        ])
     }
+
 }
