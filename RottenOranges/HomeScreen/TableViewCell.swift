@@ -7,6 +7,7 @@
 
 import UIKit
 import FirebaseFirestore
+import FirebaseAuth
 
 protocol ExploreTableViewCellDelegate: AnyObject {
     func followButtonTapped(for post: Post)
@@ -32,7 +33,12 @@ class ExploreTableViewCell: UITableViewCell {
         setupLabels()
         setupFollowButton()
         setupImageProfile()
-        initConstraints()
+        if Auth.auth().currentUser != nil {
+            initConstraints()
+        } else{
+            initConstraintsUnAuth()
+        }
+        
     }
 
     required init?(coder: NSCoder) {
@@ -147,6 +153,47 @@ class ExploreTableViewCell: UITableViewCell {
             ])
     }
     
+    func initConstraintsUnAuth() {
+        
+        NSLayoutConstraint.activate([
+                wrapperCellView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+                wrapperCellView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+                wrapperCellView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+                wrapperCellView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+
+                labelTitle.topAnchor.constraint(equalTo: wrapperCellView.topAnchor, constant: 12),
+                labelTitle.leadingAnchor.constraint(equalTo: imageProfile.trailingAnchor, constant: 64),
+                labelTitle.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+
+                followButton.topAnchor.constraint(equalTo: labelTimestamp.bottomAnchor, constant: 8),
+                followButton.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -8),
+                followButton.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
+                followButton.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+
+                imageProfile.topAnchor.constraint(equalTo: wrapperCellView.topAnchor, constant: 8),
+                imageProfile.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
+                imageProfile.widthAnchor.constraint(equalToConstant: 100), // Restrict width
+                imageProfile.heightAnchor.constraint(equalToConstant: 100), // Restrict height
+
+
+                labelTags.topAnchor.constraint(equalTo: imageProfile.bottomAnchor, constant: 8),
+                labelTags.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
+                labelTags.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+                
+                labelTimestamp.topAnchor.constraint(equalTo: labelTags.bottomAnchor, constant: 8),
+                labelTimestamp.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
+                labelTimestamp.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+
+                authorRating.topAnchor.constraint(equalTo: labelTitle.bottomAnchor, constant: 12),
+                //authorRating.bottomAnchor.constraint(equalTo: followButton.topAnchor, constant: -22),
+                authorRating.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+                
+                createdByLabel.topAnchor.constraint(equalTo: authorRating.bottomAnchor, constant: 12),
+                //createdByLabel.bottomAnchor.constraint(equalTo: wrapperCellView.topAnchor, constant: -10),
+                createdByLabel.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16)
+            ])
+    }
+    
     @objc func followButtonTapped() {
         
         if let post = post {
@@ -155,53 +202,64 @@ class ExploreTableViewCell: UITableViewCell {
     }
 
     func configure(with post: Post, author: [String: Any]? = nil, at indexPath: IndexPath) {
-        labelTitle.text = post.title
-        labelTimestamp.text = formatDate(post.timestamp)
-        labelTags.text = post.tags.joined(separator: ", ")
-        
+        self.labelTitle.text = post.title
+        self.labelTimestamp.text = formatDate(post.timestamp)
+        self.labelTags.text = post.tags.joined(separator: ", ")
+        self.followButton.isHidden = false
         if let author = author {
-            createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
+            self.createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
             if let rating = author["rating"] as? Double {
-                authorRating.text = "Author's Reputation: \(rating)/10.0"
+                self.authorRating.text = "Author's Reputation: \(rating)/10.0"
             } else {
-                authorRating.text = "Author's Reputation: Not Available"
+                self.authorRating.text = "Author's Reputation: Not Available"
             }
         } else {
-            createdByLabel.text = "Created By Unknown Author"
-            authorRating.text = "Author's Reputation: Not Available"
+            self.createdByLabel.text = "Created By Unknown Author"
+            self.authorRating.text = "Author's Reputation: Not Available"
         }
         
         if let imageUrl = URL(string: post.image) {
-            loadImage(from: imageUrl)
+            self.loadImage(from: imageUrl)
         } else {
-            imageProfile.image = UIImage(systemName: "person")
+            self.imageProfile.image = UIImage(systemName: "person")
         }
         
-        // Check if the post is followed by the current user using DocumentReference
-        AuthModel().getCurrentUserDetails { userDetails, error in
-            if let error = error {
-                print("Error fetching current user details: \(error.localizedDescription)")
-                return
-            }
+        // Check if the user is signed in
+        if let currentUser = Auth.auth().currentUser {
+            // User is signed in, configure the follow button
+            followButton.isHidden = false
+            followButton.isEnabled = true
             
-            guard let follows = userDetails["follows"] as? [DocumentReference] else {
-                print("No follows found or invalid format")
-                return
-            }
-            
-            DispatchQueue.main.async {
-                if follows.contains(post.authorRef) {
-                    self.followButton.setTitle("Following", for: .normal)
-                    self.followButton.isEnabled = false // Disable the button
-                    self.followButton.setTitleColor(.gray, for: .normal)
-                } else {
-                    self.followButton.setTitle("Follow", for: .normal)
-                    self.followButton.isEnabled = true // Enable the button
-                    self.followButton.setTitleColor(.blue, for: .normal)
+            AuthModel().getCurrentUserDetails { userDetails, error in
+                if let error = error {
+                    print("Error fetching current user details: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let follows = userDetails["follows"] as? [DocumentReference] else {
+                    print("No follows found or invalid format")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    if follows.contains(post.authorRef) {
+                        self.followButton.setTitle("Following", for: .normal)
+                        self.followButton.isEnabled = false // Disable the button
+                        self.followButton.setTitleColor(.gray, for: .normal)
+                    } else {
+                        self.followButton.setTitle("Follow", for: .normal)
+                        self.followButton.isEnabled = true // Enable the button
+                        self.followButton.setTitleColor(.blue, for: .normal)
+                    }
                 }
             }
+        } else {
+            // User is not signed in, remove follow button from the layout
+            followButton.isHidden = true
+            followButton.removeFromSuperview()
         }
     }
+
 
 
     private func loadImage(from url: URL) {
@@ -334,37 +392,44 @@ class FeedTableViewCell: UITableViewCell {
                 labelTimestamp.leadingAnchor.constraint(equalTo: wrapperCellView.leadingAnchor, constant: 16),
                 labelTimestamp.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
                 
-                authorRating.topAnchor.constraint(equalTo: labelTimestamp.bottomAnchor, constant: 1),
-                authorRating.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -8),
-                authorRating.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
+                
 
                 createdByLabel.topAnchor.constraint(equalTo: labelTimestamp.bottomAnchor, constant: 12),
                 createdByLabel.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
-                createdByLabel.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -16)
+                createdByLabel.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -16),
+                
+                authorRating.topAnchor.constraint(equalTo: createdByLabel.topAnchor, constant: 10),
+                authorRating.bottomAnchor.constraint(equalTo: wrapperCellView.bottomAnchor, constant: -8),
+                authorRating.trailingAnchor.constraint(equalTo: wrapperCellView.trailingAnchor, constant: -16),
             ])
     }
 
     func configure(with post: Post, author: [String: Any]? = nil, at indexPath: IndexPath) {
-        labelTitle.text = post.title
-        labelTimestamp.text = formatDate(post.timestamp)
-        labelTags.text = post.tags.joined(separator: ", ")
-        if let author = author {
-            createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
-            if let rating = author["rating"] as? Double {
-                authorRating.text = "Author's Reputation: \(rating)/10.0"
+        DispatchQueue.main.async {
+            self.labelTitle.text = post.title
+            self.labelTimestamp.text = self.formatDate(post.timestamp)
+            self.labelTags.text = post.tags.joined(separator: ", ")
+            
+            if let author = author {
+                self.createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
+                if let rating = author["rating"] as? Double {
+                    self.authorRating.text = "Author's Reputation: \(rating)/10.0"
+                } else {
+                    self.authorRating.text = "Author's Reputation: Not Available"
+                }
             } else {
-                authorRating.text = "Author's Reputation: Not Available"
+                self.createdByLabel.text = "Created By Unknown Author"
+                self.authorRating.text = "Author's Reputation: Not Available"
             }
-        } else {
-            createdByLabel.text = "Created By Unknown Author"
-            authorRating.text = "Author's Reputation: Not Available"
-        }
-        if let imageUrl = URL(string: post.image) {
-            loadImage(from: imageUrl)
-        } else {
-            imageProfile.image = UIImage(systemName: "person")
+            
+            if let imageUrl = URL(string: post.image) {
+                self.loadImage(from: imageUrl)
+            } else {
+                self.imageProfile.image = UIImage(systemName: "person")
+            }
         }
     }
+
 
     private func loadImage(from url: URL) {
         let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in

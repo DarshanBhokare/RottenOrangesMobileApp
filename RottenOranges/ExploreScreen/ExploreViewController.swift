@@ -16,9 +16,10 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
     
     override func loadView() {
         view = exploreViewScreen
-        
+        print("Current data before fetched \(self.posts)")
         reloadTableData()
-        
+        print("Current data after fetched \(self.posts)")
+
     }
     
     override func viewDidLoad() {
@@ -30,15 +31,26 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
         exploreViewScreen.tableView.delegate = self
         exploreViewScreen.tableView.dataSource = self
         exploreViewScreen.searchBar.delegate = self
-
+        
+       
     }
     
     func reloadTableData() {
+        print("Fetching")
+        if !posts.isEmpty
+        {
+            print("Posts in reload data are \(posts)")
+            self.exploreViewScreen.tableView.reloadData()
+            return
+        }
+        
         fetchPosts { [weak self] fetchedPosts in
             self?.posts = fetchedPosts
             self?.exploreViewScreen.tableView.reloadData()
         }
+        print("Current data after second fetched \(posts)")
     }
+
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         
@@ -93,20 +105,40 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
         exploreViewScreen.tableView.register(ExploreTableViewCell.self, forCellReuseIdentifier: "Authpost")
     }
     
+    
+//    private var isFetchingPosts = false
+    
     func fetchPosts(completion: @escaping ([Post]) -> Void) {
+        // Ensure we don't fetch multiple times simultaneously
+//        guard !isFetchingPosts else { return }
+//        isFetchingPosts = true
+        
         let db = Firestore.firestore()
         var posts = [Post]()
-
-        db.collection("posts").getDocuments { (querySnapshot, error) in
-            guard let querySnapshot = querySnapshot, error == nil else {
-                print("Error fetching posts: \(error?.localizedDescription ?? "Unknown error")")
-                completion([])
+        
+        let group = DispatchGroup()
+        group.enter()
+        
+        db.collection("posts").order(by: "timestamp", descending: true).getDocuments { (querySnapshot, error) in
+//            self.isFetchingPosts = false
+            //print("Querysnapshot \(querySnapshot)")
+//            guard let querySnapshot = querySnapshot, error == nil else {
+//                print("Error fetching posts: \(error?.localizedDescription ?? "Unknown error")")
+//                completion([])
+//                group.leave()
+//                return
+//            }
+            
+            if let error = error {
+                print("Error fetching posts \(error.localizedDescription)")
+                group.leave()
                 return
             }
             
-            let dispatchGroup = DispatchGroup()
+            //print("Documents \(querySnapshot?.documents)")
             
-            for document in querySnapshot.documents {
+            for document in querySnapshot?.documents ?? [] {
+                
                 let data = document.data()
                 let title = data["title"] as? String ?? ""
                 let content = data["content"] as? String ?? ""
@@ -119,27 +151,38 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
                     print("Skipping post '\(title)' due to missing authorRef.")
                     continue
                 }
-                let post = Post(title: title, content: content, timestamp: timestamp, image: imageUrl, tags:tags, author:author, authorRef: authorRef, rating: rating)
-                posts.append(post)
                 
-                dispatchGroup.enter()
-                // Fetch current user's details for each post
-                AuthModel().getCurrentUserDetails { userDetails, error in
-                    defer {
-                        dispatchGroup.leave()
-                    }
-                    if let error = error {
-                        print("Error fetching current user details: \(error.localizedDescription)")
-                        return
-                    }
-                }
+                let post = Post(
+                    title: title,
+                    content: content,
+                    timestamp: timestamp,
+                    image: imageUrl,
+                    tags: tags,
+                    author: author,
+                    authorRef: authorRef,
+                    rating: rating
+                )
+                
+                //print("Post \(post)")
+                
+                posts.append(post)
             }
+            group.leave()
             
-            dispatchGroup.notify(queue: .main) {
+            print("Posts in fetch \(posts)")
+            
+            // Sort posts (Firestore already supports ordering by timestamp, but for clarity)
+            posts.sort { $0.timestamp > $1.timestamp }
+            self.reloadTableData()
+            
+            group.notify(queue: .main) {
                 completion(posts)
             }
+            // Return the fetched posts
+//            completion(posts)
         }
     }
+
 }
 
 extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
@@ -164,15 +207,28 @@ extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
         cell.post = post
         
         // Fetch the user by post.author
-        AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
+//        AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
+//            if let error = error {
+//                print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
+//                DispatchQueue.main.async {
+//                    cell.configure(with: post, author: nil, at: indexPath)
+//                }
+//            } else if let userDetails = userDetails {
+//                DispatchQueue.main.async {
+//                    cell.configure(with: post, author: userDetails, at: indexPath)
+//                }
+//            }
+//        }
+        
+        post.authorRef.getDocument { documentSnapshot, error in
             if let error = error {
-                print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
+                print("Error fetching author details for \(post.author): \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     cell.configure(with: post, author: nil, at: indexPath)
                 }
-            } else if let userDetails = userDetails {
+            } else if let data = documentSnapshot?.data() {
                 DispatchQueue.main.async {
-                    cell.configure(with: post, author: userDetails, at: indexPath)
+                    cell.configure(with: post, author: data, at: indexPath)
                 }
             }
         }

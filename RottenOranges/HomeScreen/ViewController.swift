@@ -7,6 +7,7 @@
 
 import UIKit
 import FirebaseFirestore
+import FirebaseAuth
 
 class ViewController: UIViewController {
     
@@ -18,13 +19,7 @@ class ViewController: UIViewController {
     
     override func loadView() {
            view = homeScreen
-            fetchPosts { [weak self] fetchedPosts in
-            guard let self = self else { return }
-            self.posts = fetchedPosts
-            DispatchQueue.main.async {
-            self.homeScreen.tableView.reloadData()
-            }
-        }
+            
     }
     
     
@@ -38,6 +33,19 @@ class ViewController: UIViewController {
         
         homeScreen.registerBtn.addTarget(self, action: #selector(registerBtnTapped), for: .touchUpInside)
         homeScreen.loginBtn.addTarget(self, action: #selector(loginBtnTapped), for: .touchUpInside)
+        
+        fetchPosts { [weak self] fetchedPosts in
+        guard let self = self else { return }
+        self.posts = fetchedPosts
+        DispatchQueue.main.async {
+        self.homeScreen.tableView.reloadData()
+        }
+        }
+        
+        if Auth.auth().currentUser != nil {
+            let tabsViewController = HOCTabs()
+            navigationController?.pushViewController(tabsViewController, animated: true)
+        }
         
     }
     

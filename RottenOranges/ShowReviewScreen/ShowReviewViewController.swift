@@ -33,7 +33,7 @@ class ShowReviewViewController: UIViewController {
 
         self.title = "Detailed Review"
         showReviewScreen.reviewTitleLabel.text = "Title: \(review.title)"
-        showReviewScreen.reviewContentLabel.text = "Review: \(review.content)"
+        showReviewScreen.reviewContentLabel.text = "\(review.content)"
         showReviewScreen.authorLabel.text = "Author: \(review.author)"
         showReviewScreen.movieRatingLabel.text = "Movie Rating: \(review.rating)"
         

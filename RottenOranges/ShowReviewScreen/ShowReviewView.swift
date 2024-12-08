@@ -10,7 +10,7 @@ import UIKit
 class ShowReviewView: UIView {
 
     var reviewTitleLabel: UILabel!
-    var reviewContentLabel: UILabel!
+    var reviewContentLabel: UITextView!
     var authorLabel: UILabel!
     var movieRatingLabel: UILabel!
     
@@ -23,7 +23,7 @@ class ShowReviewView: UIView {
         self.backgroundColor = .white
         
         setupReviewTitleLabel()
-        setupEmailLabel()
+        setupReviewContent()
         setupAuthorLabel()
         setupMovieRatingLabel()
         setupAuthorRating()
@@ -47,13 +47,25 @@ class ShowReviewView: UIView {
         self.addSubview(reviewTitleLabel)
     }
     
-    func setupEmailLabel() {
-        reviewContentLabel = UILabel()
+    func setupReviewContent() {
+        reviewContentLabel = UITextView()
         reviewContentLabel.translatesAutoresizingMaskIntoConstraints = false
-        reviewContentLabel.textColor = .black
-        reviewContentLabel.textAlignment = .center
         reviewContentLabel.font = UIFont.systemFont(ofSize: 16)
-        reviewContentLabel.text = "Review"
+        reviewContentLabel.textColor = .black
+        reviewContentLabel.isEditable = false
+        reviewContentLabel.isScrollEnabled = true
+        reviewContentLabel.text = "This is the description of the post. You can replace this text with the actual post content."
+        reviewContentLabel.backgroundColor = .white
+        reviewContentLabel.layer.borderColor = UIColor.lightGray.cgColor
+        reviewContentLabel.layer.borderWidth = 1.0
+        reviewContentLabel.layer.cornerRadius = 8.0
+
+//        reviewContentLabel = UILabel()
+//        reviewContentLabel.translatesAutoresizingMaskIntoConstraints = false
+//        reviewContentLabel.textColor = .black
+//        reviewContentLabel.textAlignment = .center
+//        reviewContentLabel.font = UIFont.systemFont(ofSize: 16)
+//        reviewContentLabel.text = "Review"
         self.addSubview(reviewContentLabel)
     }
     
@@ -118,10 +130,12 @@ class ShowReviewView: UIView {
             reviewTitleLabel.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 100),
             reviewTitleLabel.leadingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.leadingAnchor, constant: 20),
             reviewTitleLabel.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-            
+       
             reviewContentLabel.topAnchor.constraint(equalTo: reviewTitleLabel.bottomAnchor, constant: 20),
             reviewContentLabel.leadingAnchor.constraint(equalTo: reviewTitleLabel.leadingAnchor),
             reviewContentLabel.trailingAnchor.constraint(equalTo: reviewTitleLabel.trailingAnchor),
+            reviewContentLabel.heightAnchor.constraint(equalToConstant: 150),
+            
             authorLabel.topAnchor.constraint(equalTo: reviewContentLabel.bottomAnchor, constant: 20),
             authorLabel.leadingAnchor.constraint(equalTo: reviewContentLabel.leadingAnchor),
             authorLabel.trailingAnchor.constraint(equalTo: reviewContentLabel.trailingAnchor),

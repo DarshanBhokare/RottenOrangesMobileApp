@@ -141,6 +141,9 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
                 }
             }
             
+            // Sort posts by timestamp in descending order
+            posts.sort { $0.timestamp > $1.timestamp }
+            self.reloadTableData()
             group.notify(queue: .main) {
                 completion(posts)
             }
