@@ -172,7 +172,7 @@ class AuthModel {
     func editUser(documentId: String, updatedData: [String: Any], completion: @escaping (Error?) -> Void) {
         let db = Firestore.firestore()
         let userRef = db.collection("users").document(documentId)
-        
+    
         userRef.updateData(updatedData) { error in
             completion(error)
         }

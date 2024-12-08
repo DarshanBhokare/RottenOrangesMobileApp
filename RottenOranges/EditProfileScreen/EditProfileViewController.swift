@@ -19,6 +19,12 @@ class EditProfileViewController: UIViewController, ObservableObject, UITextField
     
     let userInfo: Profile
     
+    protocol EditProfileDelegate: AnyObject {
+            func didUpdateProfile(with updatedProfile: Profile)
+    }
+    
+    weak var delegate: EditProfileDelegate?
+    
     init(userInfo: Profile) {
        self.userInfo = userInfo
        super.init(nibName: nil, bundle: nil)
@@ -127,55 +133,65 @@ class EditProfileViewController: UIViewController, ObservableObject, UITextField
     }
     
     @objc func registerBtnTapped() {
-        let name = registerScreen.nameField.text ?? ""
-        let email = registerScreen.emailField.text?.lowercased() ?? ""
-        
-        if !isValidEmail(email) {
+        let updatedName = registerScreen.nameField.text ?? ""
+        let updatedEmail = registerScreen.emailField.text?.lowercased() ?? ""
+
+        // Validate email and inputs
+        if !isValidEmail(updatedEmail) {
             self.showAlert(message: "Invalid Email")
             return
         }
-        
-        if name.isEmpty || email.isEmpty {
+
+        if updatedName.isEmpty || updatedEmail.isEmpty {
             showAlert(message: "Please enter all name, email, and other details.")
             return
         }
 
-        let updatedData: [String: Any] = [
-            "name": name,
-            "email": email
+        // Prepare updated data
+        var updatedData: [String: Any] = [
+            "name": updatedName,
+            "email": updatedEmail
         ]
-        
-        // Add profile image data if available
+
+        guard let currentUserName = userInfo.name else {
+            self.showAlert(message: "User name is not available.")
+            return
+        }
+
+        // Check if an image is selected for upload
         if let image = self.pickedImage, let imageData = image.jpegData(compressionQuality: 0.5) {
             let storageRef = Storage.storage().reference().child("userImages/\(UUID().uuidString).jpg")
-            
             storageRef.putData(imageData, metadata: nil) { metadata, error in
                 if let error = error {
                     self.showAlert(message: "Failed to upload image: \(error.localizedDescription)")
                     return
                 }
-                
+
                 storageRef.downloadURL { url, error in
                     if let error = error {
                         self.showAlert(message: "Failed to retrieve image URL: \(error.localizedDescription)")
                         return
                     }
-                    
+
                     if let downloadURL = url {
-                        var updatedDataWithImage = updatedData
-                        updatedDataWithImage["profileImageURL"] = downloadURL.absoluteString
-                        
-                        self.updateUserData(name: name, updatedData: updatedDataWithImage)
+                        // Add the image URL to the updated data
+                        updatedData["profileImageURL"] = downloadURL.absoluteString
                     }
+
+                    // Update user data after image upload
+                    self.updateUserData(name: currentUserName, updatedData: updatedData)
                 }
             }
         } else {
-            // Update without profile image
-            self.updateUserData(name: name, updatedData: updatedData)
+            // Update user data without a new image
+            if let existingImageURL = userInfo.profileImage {
+                updatedData["profileImageURL"] = existingImageURL
+            }
+            self.updateUserData(name: currentUserName, updatedData: updatedData)
         }
-        
-        self.navigationController?.popViewController(animated: true)
     }
+
+
 
     private func updateUserData(name: String, updatedData: [String: Any]) {
         model.getUserByUsername(username: name) { userData, documentId, error in
@@ -183,22 +199,32 @@ class EditProfileViewController: UIViewController, ObservableObject, UITextField
                 self.showAlert(message: "Failed to retrieve user: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let documentId = documentId else {
                 self.showAlert(message: "User document not found.")
                 return
             }
-            
+
             self.model.editUser(documentId: documentId, updatedData: updatedData) { error in
                 if let error = error {
                     self.showAlert(message: "Failed to update user: \(error.localizedDescription)")
                 } else {
-                    self.showAlert(message: "User updated successfully!")
+                    // Prepare updated profile
+                    var updatedProfile = self.userInfo
+                    updatedProfile.name = updatedData["name"] as? String
+                    updatedProfile.email = updatedData["email"] as? String
+                    updatedProfile.profileImage = updatedData["profileImageURL"] as? String
+                    
+                    // Notify the delegate
+                    self.delegate?.didUpdateProfile(with: updatedProfile)
+                    
+                    // Go back to the previous screen
                     self.navigationController?.popViewController(animated: true)
                 }
             }
         }
     }
+
 
 
     

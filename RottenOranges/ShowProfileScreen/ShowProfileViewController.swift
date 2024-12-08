@@ -12,7 +12,7 @@ class ShowProfileViewController: UIViewController {
 
     var delegate: ViewController!
     let showProfileScreen = ShowProfileView()
-    let profileInfo: Profile
+    var profileInfo: Profile
     
     override func loadView() {
         view = showProfileScreen
@@ -87,6 +87,7 @@ class ShowProfileViewController: UIViewController {
     @objc func editButtonTapped(){
         
         let editProfileController = EditProfileViewController(userInfo: profileInfo)
+        editProfileController.delegate = self
         navigationController?.pushViewController(editProfileController, animated: true)
         
     }
@@ -112,5 +113,25 @@ class ShowProfileViewController: UIViewController {
         let alert = UIAlertController(title: "Alert", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
+    }
+}
+
+extension ShowProfileViewController: EditProfileViewController.EditProfileDelegate {
+    func didUpdateProfile(with updatedProfile: Profile) {
+        // Update the profile info
+        self.profileInfo.name = updatedProfile.name
+        self.profileInfo.email = updatedProfile.email
+        self.profileInfo.profileImage = updatedProfile.profileImage
+        
+        // Update the UI
+        DispatchQueue.main.async {
+            self.showProfileScreen.labelName.text = updatedProfile.name
+            self.showProfileScreen.labelEmail.text = "Email: " + (updatedProfile.email ?? "")
+            if let profileImageURL = updatedProfile.profileImage, let url = URL(string: profileImageURL) {
+                self.loadImage(from: url)
+            } else {
+                self.showProfileScreen.imageProfile.image = UIImage(named: "defaultImage")
+            }
+        }
     }
 }
