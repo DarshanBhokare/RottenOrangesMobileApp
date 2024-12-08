@@ -203,26 +203,35 @@ class ExploreTableViewCell: UITableViewCell {
     }
 
     func configure(with post: Post, author: [String: Any]? = nil, at indexPath: IndexPath) {
+        // Set the post details
         self.labelTitle.text = post.title
         self.labelTimestamp.text = formatDate(post.timestamp)
         self.labelTags.text = post.tags.joined(separator: ", ")
         self.followButton.isHidden = false
+
+        // Configure the author's details
         if let author = author {
+            // Author name
             self.createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
+            
+            // Author rating
             if let rating = author["rating"] as? Double {
                 self.authorRating.text = "Author's Reputation: \(rating)/10.0"
             } else {
                 self.authorRating.text = "Author's Reputation: Not Available"
             }
+            
+            // Author profile image
+            if let profileImageURL = author["profileImageURL"] as? String, let imageUrl = URL(string: profileImageURL) {
+                self.loadImage(from: imageUrl)
+            } else {
+                self.imageProfile.image = UIImage(systemName: "person") // Default profile image
+            }
         } else {
+            // Default values if author is nil
             self.createdByLabel.text = "Created By Unknown Author"
             self.authorRating.text = "Author's Reputation: Not Available"
-        }
-        
-        if let imageUrl = URL(string: post.image) {
-            self.loadImage(from: imageUrl)
-        } else {
-            self.imageProfile.image = UIImage(systemName: "person")
+            self.imageProfile.image = UIImage(systemName: "person") // Default profile image
         }
         
         // Check if the user is signed in
@@ -411,25 +420,30 @@ class FeedTableViewCell: UITableViewCell {
             self.labelTimestamp.text = self.formatDate(post.timestamp)
             self.labelTags.text = post.tags.joined(separator: ", ")
             
+            // Safely unwrap the author
             if let author = author {
                 self.createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
+                
                 if let rating = author["rating"] as? Double {
                     self.authorRating.text = "Author's Reputation: \(rating)/10.0"
                 } else {
                     self.authorRating.text = "Author's Reputation: Not Available"
                 }
+                
+                if let profileImageURL = author["profileImageURL"] as? String, let imageUrl = URL(string: profileImageURL) {
+                    self.loadImage(from: imageUrl)
+                } else {
+                    self.imageProfile.image = UIImage(systemName: "person") // Default profile image
+                }
             } else {
+                // Default values when author is nil
                 self.createdByLabel.text = "Created By Unknown Author"
                 self.authorRating.text = "Author's Reputation: Not Available"
-            }
-            
-            if let imageUrl = URL(string: post.image) {
-                self.loadImage(from: imageUrl)
-            } else {
-                self.imageProfile.image = UIImage(systemName: "person")
+                self.imageProfile.image = UIImage(systemName: "person") // Default profile image
             }
         }
     }
+
 
 
     private func loadImage(from url: URL) {
