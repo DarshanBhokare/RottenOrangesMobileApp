@@ -16,10 +16,6 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
     
     override func loadView() {
         view = exploreViewScreen
-//        print("Current data before fetched \(self.posts)")
-//        self.initSetup()
-//        print("Current data after fetched \(self.posts)")
-
     }
     
     override func viewDidLoad() {
@@ -28,61 +24,40 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
         title = "Explore"
         navigationItem.hidesBackButton = true
         
-        
-        
-        //        exploreViewScreen.tableView.delegate = self
-        //        exploreViewScreen.tableView.dataSource = self
-        //        exploreViewScreen.searchBar.delegate = self
-        
-        //        initSetup()
+
         
         setupTableView()
-        
-        fetchPosts { [weak self] fetchedPosts in
-        guard let self = self else { return }
-        self.posts = fetchedPosts
-        DispatchQueue.main.async {
-            self.exploreViewScreen.tableView.reloadData()
-        }
-        }
-        
-       
-            
-        }
-    
-    
-    func initSetup()
-    {
-        self.reloadTableData()
-        
-        exploreViewScreen.tableView.reloadData()
         
         exploreViewScreen.tableView.delegate = self
         exploreViewScreen.tableView.dataSource = self
         exploreViewScreen.searchBar.delegate = self
-    }
+        
+        self.reloadTableData()
+            
+        }
+    
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Ensure table view delegate and data source are reassigned
-        
-        initSetup()
+        fetchPosts { [weak self] fetchedPosts in
+            guard let self = self else { return }
+            self.posts = fetchedPosts
+
+            // Simulate a delay before reloading the table
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                print("Reloading with \(self.posts.count) posts")
+                self.exploreViewScreen.tableView.reloadData()
+            }
+        }
     }
     
     func reloadTableData() {
-        print("Fetching")
-        if !posts.isEmpty
-        {
-            print("Posts in reload data are \(posts)")
-            self.exploreViewScreen.tableView.reloadData()
-            return
-        }
-        
         fetchPosts { [weak self] fetchedPosts in
             self?.posts = fetchedPosts
-            self?.exploreViewScreen.tableView.reloadData()
+            DispatchQueue.main.async {
+                self?.exploreViewScreen.tableView.reloadData()
+            }
         }
-        print("Current data after second fetched \(posts)")
     }
 
     
@@ -132,7 +107,8 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
     }
 
     func hidePosts() {
-        // Implement later
+        filteredPosts = []
+        exploreViewScreen.tableView.reloadData()
     }
     
     private func setupTableView() {
@@ -212,7 +188,6 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
             
             // Sort posts (Firestore already supports ordering by timestamp, but for clarity)
             posts.sort { $0.timestamp > $1.timestamp }
-            self.reloadTableData()
             
             group.notify(queue: .main) {
                 completion(posts)
@@ -240,38 +215,26 @@ extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Authpost", for: indexPath) as! ExploreTableViewCell
         cell.delegate = self
         cell.indexPath = indexPath
-        
-        // Determine whether to use posts or filteredPosts
-        let post = (exploreViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
+
+        let post = exploreViewScreen.searchBar.text?.isEmpty ?? true ? posts[indexPath.row] : filteredPosts[indexPath.row]
         cell.post = post
-        
-        // Fetch the user by post.author
-//        AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
-//            if let error = error {
-//                print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
-//                DispatchQueue.main.async {
-//                    cell.configure(with: post, author: nil, at: indexPath)
-//                }
-//            } else if let userDetails = userDetails {
-//                DispatchQueue.main.async {
-//                    cell.configure(with: post, author: userDetails, at: indexPath)
-//                }
-//            }
-//        }
-        
-        post.authorRef.getDocument { documentSnapshot, error in
-            if let error = error {
-                print("Error fetching author details for \(post.author): \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    cell.configure(with: post, author: nil, at: indexPath)
-                }
-            } else if let data = documentSnapshot?.data() {
-                DispatchQueue.main.async {
-                    cell.configure(with: post, author: data, at: indexPath)
+
+        // Add a delay for rendering cell data
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            post.authorRef.getDocument { documentSnapshot, error in
+                if let error = error {
+                    print("Error fetching author details for \(post.author): \(error.localizedDescription)")
+                    DispatchQueue.main.async {
+                        cell.configure(with: post, author: nil, at: indexPath)
+                    }
+                } else if let data = documentSnapshot?.data() {
+                    DispatchQueue.main.async {
+                        cell.configure(with: post, author: data, at: indexPath)
+                    }
                 }
             }
         }
-        
+
         return cell
     }
 
