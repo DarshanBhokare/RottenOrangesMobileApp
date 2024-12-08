@@ -36,6 +36,7 @@ class ShowProfileView: UIView {
         setupbuttonEdit()
         setupLabelRating()
         initConstraints()
+        checkUserRole()
     }
     
     func setupbuttonLogout(){
@@ -129,6 +130,20 @@ class ShowProfileView: UIView {
         labelZip.textColor = .black
         labelZip.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(labelZip)
+    }
+    
+    // Fetch current user details
+    func checkUserRole() {
+        AuthModel().getCurrentUserDetails { userDetails, error in
+            if let error = error {
+                print("Error fetching user details: \(error.localizedDescription)")
+            } else if let role = userDetails["role"] as? String, role == "User" {
+                // Hide rating fields if the role is "user"
+                DispatchQueue.main.async {
+                    self.labelRating.isHidden = true
+                }
+            }
+        }
     }
         
     func initConstraints(){
