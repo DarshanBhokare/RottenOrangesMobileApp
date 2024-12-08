@@ -60,6 +60,47 @@ class AuthModel {
         }
     }
 
+    func unfollowUser(for userRef: DocumentReference, completion: @escaping (Error?) -> Void) {
+        getCurrentUserDetails { userDetails, error in
+            guard error == nil else {
+                completion(error)
+                return
+            }
+
+            let currentUserEmail = userDetails["email"] as? String ?? ""
+            let db = Firestore.firestore()
+            let currentUserRef = db.collection("users").whereField("email", isEqualTo: currentUserEmail)
+
+            currentUserRef.getDocuments { (querySnapshot, error) in
+                if let error = error {
+                    completion(error)
+                    return
+                }
+
+                guard let currentUserDoc = querySnapshot?.documents.first else {
+                    let error = NSError(domain: "Current user document not found", code: 0, userInfo: nil)
+                    completion(error)
+                    return
+                }
+
+                var updatedFollows = userDetails["follows"] as? [DocumentReference] ?? []
+
+                // Check if the userRef is in the 'follows' list
+                if let index = updatedFollows.firstIndex(where: { $0.path == userRef.path }) {
+                    updatedFollows.remove(at: index)
+
+                    // Update the follows field
+                    currentUserDoc.reference.updateData(["follows": updatedFollows]) { error in
+                        completion(error)
+                    }
+                } else {
+                    // UserRef is not in the 'follows' list, no action needed
+                    completion(nil)
+                }
+            }
+        }
+    }
+
     
     // Get current user details
     func getCurrentUserDetails(completion: @escaping ([String: Any], Error?) -> Void) {

@@ -244,9 +244,9 @@ class ExploreTableViewCell: UITableViewCell {
                 
                 DispatchQueue.main.async {
                     if follows.contains(post.authorRef) {
-                        self.followButton.setTitle("Following", for: .normal)
-                        self.followButton.isEnabled = false // Disable the button
-                        self.followButton.setTitleColor(.gray, for: .normal)
+                        self.followButton.setTitle("Unfollow", for: .normal)
+                        self.followButton.isEnabled = true
+                        self.followButton.setTitleColor(.red, for: .normal)
                     } else {
                         self.followButton.setTitle("Follow", for: .normal)
                         self.followButton.isEnabled = true // Enable the button
