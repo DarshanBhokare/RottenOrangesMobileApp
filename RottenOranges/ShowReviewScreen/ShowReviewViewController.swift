@@ -43,65 +43,71 @@ class ShowReviewViewController: UIViewController {
         
     }
     
-    
+    func showAlert(message: String, completion: ((UIAlertAction) -> Void)? = nil) {
+        let alert = UIAlertController(title: "Alert", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: completion))
+        DispatchQueue.main.async {
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+
     @objc func submitRatingButtonTapped() {
-        
         let db = Firestore.firestore()
 
+        // Validate the rating input
+        guard let newRatingText = showReviewScreen.authorRating.text,
+              let newRating = Double(newRatingText),
+              (0...10).contains(newRating) else {
+            showAlert(message: "Invalid rating. Please provide a number between 0 and 10.")
+            return
+        }
+
         AuthModel().getUserByDocumentReference(userRef: review.authorRef) { (userDetails, documentId, error) in
-            if let error = error{
+            if let error = error {
                 // Handle error
-                print("Error fetching user details: \(error.localizedDescription)")
+                self.showAlert(message: "Error fetching user details: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let userId = Auth.auth().currentUser?.uid else {
-                print("Error: No user logged in.")
+                self.showAlert(message: "Error: No user logged in.")
                 return
             }
-            
+
             guard let userDetails = userDetails, let documentId = documentId else {
-                print("Error: User or Document ID not found for author: \(self.review.author)")
+                self.showAlert(message: "Error: User or Document ID not found for author: \(self.review.author)")
                 return
             }
-            
+
             let ratingCount = userDetails["ratingCount"] as? Int ?? 0
             let existingRating = userDetails["rating"] as? Double ?? 0.0
-            
-            // Get the new rating from the text field
-            guard let newRatingText = self.showReviewScreen.authorRating.text,
-                  let newRating = Double(newRatingText), newRating > 0 else {
-                print("Invalid rating provided.")
-                return
-            }
-            
+
             let updatedRatingCount = ratingCount + 1
             let totalRating = (existingRating * Double(ratingCount)) + newRating
             let newAverageRating = totalRating / Double(updatedRatingCount)
-            
+
             // Prepare data to update in Firebase
             let updatedData: [String: Any] = [
                 "ratingCount": updatedRatingCount,
                 "rating": newAverageRating
             ]
-            
+
             // Update the data in Firebase
             db.collection("users").document(documentId).updateData(updatedData) { error in
-            if let error = error {
-                print("Error updating Firestore document: \(error.localizedDescription)")
-            } else {
-                print("Successfully updated the user rating in Firestore.")
-                DispatchQueue.main.async {
-                    // Navigate back to the previous screen
-                    self.navigationController?.popViewController(animated: true)
+                if let error = error {
+                    self.showAlert(message: "Error updating Firestore document: \(error.localizedDescription)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.showAlert(message: "Rating submitted successfully!") { _ in
+                            // Navigate back to the previous screen
+                            self.navigationController?.popViewController(animated: true)
+                        }
+                    }
                 }
             }
-          }
-                
-            
-            
         }
     }
+
 
 
 }

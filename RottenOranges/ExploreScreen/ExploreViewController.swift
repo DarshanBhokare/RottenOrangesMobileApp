@@ -261,24 +261,38 @@ extension ExploreViewController: ExploreTableViewCellDelegate {
         // Fetch post data for the specific post
         print("Follow button tapped for post: \(post)")
         AuthModel().followUser(for: post.authorRef) { error in
-            if let error = error {
-                print("Error following reviewer: \(error.localizedDescription)")
-            } else {
-                print("Successfully followed reviewer: \(post.author)")
-                DispatchQueue.main.async {
-                    if let visibleIndexPaths = self.exploreViewScreen.tableView.indexPathsForVisibleRows {
-                        for indexPath in visibleIndexPaths {
-                            let cell = self.exploreViewScreen.tableView.cellForRow(at: indexPath) as? ExploreTableViewCell
-                            if let cellPost = cell?.post, cellPost.title == post.title {
-                                cell?.followButton.setTitle("Following", for: .normal)
-                                cell?.followButton.isEnabled = false
-                                cell?.followButton.setTitleColor(.gray, for: .normal)
-                                break
+            DispatchQueue.main.async {
+                if let error = error {
+                    // Show an alert for the error
+                    self.showAlert(message: "Error following reviewer: \(error.localizedDescription)")
+                    print("Error following reviewer: \(error.localizedDescription)")
+                } else {
+                    // Show an alert for successful follow
+                    self.showAlert(message: "Successfully followed reviewer: \(post.author)") { _ in
+                        // Update UI on success
+                        if let visibleIndexPaths = self.exploreViewScreen.tableView.indexPathsForVisibleRows {
+                            for indexPath in visibleIndexPaths {
+                                let cell = self.exploreViewScreen.tableView.cellForRow(at: indexPath) as? ExploreTableViewCell
+                                if let cellPost = cell?.post, cellPost.title == post.title {
+                                    cell?.followButton.setTitle("Following", for: .normal)
+                                    cell?.followButton.isEnabled = false
+                                    cell?.followButton.setTitleColor(.gray, for: .normal)
+                                    break
+                                }
                             }
                         }
                     }
+                    print("Successfully followed reviewer: \(post.author)")
                 }
             }
         }
     }
+
+    // Show alert helper function
+    private func showAlert(message: String, completion: ((UIAlertAction) -> Void)? = nil) {
+        let alert = UIAlertController(title: "Alert", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: completion))
+        present(alert, animated: true, completion: nil)
+    }
+
 }

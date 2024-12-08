@@ -19,45 +19,47 @@ class AuthModel {
                 completion(error)
                 return
             }
-
-            var updatedFollows = userDetails["follows"] as? [DocumentReference] ?? []
-            // Check if the userRef is not already in the 'follows' list
-            if !updatedFollows.contains(where: { $0.path == userRef.path }) {
-                updatedFollows.append(userRef)
-                let db = Firestore.firestore()
-                let email = userDetails["email"] as? String ?? ""
-                
-                // Query Firestore to find the user document using email
-                let usersRef = db.collection("users")
-                let query = usersRef.whereField("email", isEqualTo: email)
-                
-                query.getDocuments { (querySnapshot, error) in
-                    if let error = error {
-                        completion(error)
-                        return
-                    }
-                    
-                    // Check if any document matches the query
-                    if let document = querySnapshot?.documents.first {
-                        // Document found, update 'follows' field
-                        document.reference.updateData(["follows": updatedFollows]) { error in
-                            if let error = error {
-                                completion(error)
-                            } else {
-                                completion(nil)
-                            }
-                        }
-                    } else {
-                        let error = NSError(domain: "User document not found", code: 0, userInfo: nil)
-                        completion(error)
-                    }
+            
+            let currentUserEmail = userDetails["email"] as? String ?? ""
+            let db = Firestore.firestore()
+            let currentUserRef = db.collection("users").whereField("email", isEqualTo: currentUserEmail)
+            
+            // Ensure we do not allow following oneself
+            currentUserRef.getDocuments { (querySnapshot, error) in
+                if let error = error {
+                    completion(error)
+                    return
                 }
-            } else {
-                // UserRef already exists in 'follows' list
-                completion(nil)
+                
+                guard let currentUserDoc = querySnapshot?.documents.first else {
+                    let error = NSError(domain: "Current user document not found", code: 0, userInfo: nil)
+                    completion(error)
+                    return
+                }
+                
+                if currentUserDoc.reference.path == userRef.path {
+                    let error = NSError(domain: "Cannot follow yourself", code: 0, userInfo: nil)
+                    completion(error)
+                    return
+                }
+                
+                // Proceed if the user is not trying to follow themselves
+                var updatedFollows = userDetails["follows"] as? [DocumentReference] ?? []
+                if !updatedFollows.contains(where: { $0.path == userRef.path }) {
+                    updatedFollows.append(userRef)
+                    
+                    // Update the follows field
+                    currentUserDoc.reference.updateData(["follows": updatedFollows]) { error in
+                        completion(error)
+                    }
+                } else {
+                    // UserRef already exists in 'follows' list
+                    completion(nil)
+                }
             }
         }
     }
+
     
     // Get current user details
     func getCurrentUserDetails(completion: @escaping ([String: Any], Error?) -> Void) {

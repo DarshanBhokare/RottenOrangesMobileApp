@@ -13,43 +13,47 @@ import FirebaseStorage
 class NewPostViewController: UIViewController {
 
     let newPostScreen = NewPostView()
-    var authorImageURL:String?
+    var authorImageURL: String?
     
     override func loadView() {
        view = newPostScreen
     }
 
     override func viewDidLoad() {
-
         super.viewDidLoad()
         
         let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(hideKeyboardOnTap))
-            tapRecognizer.cancelsTouchesInView = false
-            view.addGestureRecognizer(tapRecognizer)
+        tapRecognizer.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapRecognizer)
         
         title = "Create Post"
     
         newPostScreen.saveButton.addTarget(self, action: #selector(saveBtnTapped), for: .touchUpInside)
-        
     }
     
     @objc func saveBtnTapped() {
         let postTitle = newPostScreen.titleTextField.text ?? ""
         let postContent = newPostScreen.contentTextView.text ?? ""
-        let movieRating = newPostScreen.movieRatingTextField.text ?? ""
+        let movieRatingText = newPostScreen.movieRatingTextField.text ?? ""
         var author = ""
         var tags: [String] = []
 
+        // Validate title and content
         if postTitle.isEmpty || postContent.isEmpty {
             showAlert(message: "Title or content cannot be empty.")
+            return
+        }
+
+        // Validate movie rating
+        guard let movieRating = Double(movieRatingText), (0...10).contains(movieRating) else {
+            showAlert(message: "Invalid rating. Please provide a number between 0 and 10.")
             return
         }
 
         // Get tags and author name from current user
         AuthModel().getCurrentUserDetails { (userDetails, error) in
             if let error = error {
-                // Handle error
-                print("Error fetching user details: \(error.localizedDescription)")
+                self.showAlert(message: "Error fetching user details: \(error.localizedDescription)")
                 return
             }
 
@@ -66,7 +70,7 @@ class NewPostViewController: UIViewController {
             }
 
             guard let email = userDetails["email"] as? String else {
-                print("User email not found.")
+                self.showAlert(message: "User email not found.")
                 return
             }
 
@@ -77,12 +81,12 @@ class NewPostViewController: UIViewController {
 
             query.getDocuments { querySnapshot, error in
                 if let error = error {
-                    print("Error fetching user document: \(error.localizedDescription)")
+                    self.showAlert(message: "Error fetching user document: \(error.localizedDescription)")
                     return
                 }
 
                 guard let document = querySnapshot?.documents.first else {
-                    print("User document not found.")
+                    self.showAlert(message: "User document not found.")
                     return
                 }
 
@@ -97,7 +101,7 @@ class NewPostViewController: UIViewController {
                     tags: tags,
                     author: author,
                     authorRef: authorRef,
-                    rating: Double(movieRating) ?? 0.0
+                    rating: movieRating
                 )
 
                 // Prepare post data
@@ -115,26 +119,24 @@ class NewPostViewController: UIViewController {
                 // Add post to Firestore
                 db.collection("posts").addDocument(data: postData) { error in
                     if let error = error {
-                        print("Error adding document: \(error)")
+                        self.showAlert(message: "Error adding document: \(error.localizedDescription)")
                     } else {
-                        print("Document added successfully")
+                        self.showAlert(message: "Post created successfully!") { _ in
+                            self.navigationController?.popViewController(animated: true)
+                        }
                     }
                 }
-                self.navigationController?.popViewController(animated: true)
             }
         }
     }
 
-    
-    private func showAlert(message: String) {
+    private func showAlert(message: String, completion: ((UIAlertAction) -> Void)? = nil) {
         let alert = UIAlertController(title: "Alert", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        alert.addAction(UIAlertAction(title: "OK", style: .default, handler: completion))
         present(alert, animated: true, completion: nil)
     }
     
-    @objc func hideKeyboardOnTap(){
+    @objc func hideKeyboardOnTap() {
         view.endEditing(true)
     }
-
 }
-
