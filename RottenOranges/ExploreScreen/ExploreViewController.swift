@@ -16,9 +16,9 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
     
     override func loadView() {
         view = exploreViewScreen
-        print("Current data before fetched \(self.posts)")
-        reloadTableData()
-        print("Current data after fetched \(self.posts)")
+//        print("Current data before fetched \(self.posts)")
+//        self.initSetup()
+//        print("Current data after fetched \(self.posts)")
 
     }
     
@@ -30,14 +30,26 @@ class ExploreViewController: UIViewController, UITextFieldDelegate {
         
         
         
-//        exploreViewScreen.tableView.delegate = self
-//        exploreViewScreen.tableView.dataSource = self
-//        exploreViewScreen.searchBar.delegate = self
+        //        exploreViewScreen.tableView.delegate = self
+        //        exploreViewScreen.tableView.dataSource = self
+        //        exploreViewScreen.searchBar.delegate = self
         
-        initSetup()
+        //        initSetup()
+        
         setupTableView()
+        
+        fetchPosts { [weak self] fetchedPosts in
+        guard let self = self else { return }
+        self.posts = fetchedPosts
+        DispatchQueue.main.async {
+            self.exploreViewScreen.tableView.reloadData()
+        }
+        }
+        
        
-    }
+            
+        }
+    
     
     func initSetup()
     {

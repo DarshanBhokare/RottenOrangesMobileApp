@@ -30,13 +30,8 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
 //        feedViewScreen.tableView.dataSource = self
 //        feedViewScreen.searchBar.delegate = self
         
-        initSetup()
         setupTableView()
-//        reloadTableData() // Load data initially
-    }
-    
-    func initSetup()
-    {
+        
         self.reloadTableData()
         
         feedViewScreen.tableView.reloadData()
@@ -44,20 +39,46 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
         feedViewScreen.tableView.delegate = self
         feedViewScreen.tableView.dataSource = self
         feedViewScreen.searchBar.delegate = self
+        
+       
+//        reloadTableData() // Load data initially
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        // Ensure table view delegate and data source are reassigned
-        
+//    func initSetup()
+//    {
 //        self.reloadTableData()
 //        
 //        feedViewScreen.tableView.reloadData()
 //        
 //        feedViewScreen.tableView.delegate = self
 //        feedViewScreen.tableView.dataSource = self
-        
-        initSetup()
+//        feedViewScreen.searchBar.delegate = self
+//    }
+    
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        // Ensure table view delegate and data source are reassigned
+//        
+////        self.reloadTableData()
+////        
+////        feedViewScreen.tableView.reloadData()
+////        
+////        feedViewScreen.tableView.delegate = self
+////        feedViewScreen.tableView.dataSource = self
+//        
+//        initSetup()
+//    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        fetchPosts { [weak self] fetchedPosts in
+            guard let self = self else { return }
+            self.posts = fetchedPosts
+            DispatchQueue.main.async {
+                print("Reloading with \(self.posts.count) posts")
+                self.feedViewScreen.tableView.reloadData()
+            }
+        }
     }
     
     func reloadTableData() {
@@ -111,20 +132,19 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
         feedViewScreen.tableView.register(FeedTableViewCell.self, forCellReuseIdentifier: "Authpost")
     }
     
-    // Fetch posts based on followed authors
     func fetchPosts(completion: @escaping ([Post]) -> Void) {
         AuthModel().getCurrentUserDetails { userDetails, error in
             guard error == nil else {
-                print("Error fetching current user details: \(error?.localizedDescription ?? "Unknown error")")
+                print("Error fetching user details: \(error?.localizedDescription ?? "Unknown error")")
                 completion([])
                 return
             }
             
             guard let follows = userDetails["follows"] as? [DocumentReference], !follows.isEmpty else {
-                completion([]) // No follows, return empty array
+                completion([])
                 return
             }
-            
+
             let db = Firestore.firestore()
             var posts = [Post]()
             let group = DispatchGroup()
@@ -147,7 +167,6 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
                         let tags = data["tags"] as? [String] ?? []
                         let author = data["author"] as? String ?? ""
                         guard let authorRef = data["authorRef"] as? DocumentReference else {
-                            print("Skipping post '\(title)' due to missing authorRef.")
                             continue
                         }
                         let rating = data["rating"] as? Double ?? 0.0
@@ -167,13 +186,77 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
                     group.leave()
                 }
             }
-            
-            posts.sort { $0.timestamp > $1.timestamp }
+
             group.notify(queue: .main) {
+                posts.sort { $0.timestamp > $1.timestamp }
                 completion(posts)
             }
         }
     }
+    
+    // Fetch posts based on followed authors
+//    func fetchPosts(completion: @escaping ([Post]) -> Void) {
+//        AuthModel().getCurrentUserDetails { userDetails, error in
+//            guard error == nil else {
+//                print("Error fetching current user details: \(error?.localizedDescription ?? "Unknown error")")
+//                completion([])
+//                return
+//            }
+//            
+//            guard let follows = userDetails["follows"] as? [DocumentReference], !follows.isEmpty else {
+//                completion([]) // No follows, return empty array
+//                return
+//            }
+//            
+//            let db = Firestore.firestore()
+//            var posts = [Post]()
+//            let group = DispatchGroup()
+//            
+//            for authorRef in follows {
+//                group.enter()
+//                db.collection("posts").whereField("authorRef", isEqualTo: authorRef).getDocuments { querySnapshot, error in
+//                    if let error = error {
+//                        print("Error fetching posts for author \(authorRef.path): \(error.localizedDescription)")
+//                        group.leave()
+//                        return
+//                    }
+//                    
+//                    for document in querySnapshot?.documents ?? [] {
+//                        let data = document.data()
+//                        let title = data["title"] as? String ?? ""
+//                        let content = data["content"] as? String ?? ""
+//                        let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+//                        let imageUrl = data["image"] as? String ?? ""
+//                        let tags = data["tags"] as? [String] ?? []
+//                        let author = data["author"] as? String ?? ""
+//                        guard let authorRef = data["authorRef"] as? DocumentReference else {
+//                            print("Skipping post '\(title)' due to missing authorRef.")
+//                            continue
+//                        }
+//                        let rating = data["rating"] as? Double ?? 0.0
+//                        
+//                        let post = Post(
+//                            title: title,
+//                            content: content,
+//                            timestamp: timestamp,
+//                            image: imageUrl,
+//                            tags: tags,
+//                            author: author,
+//                            authorRef: authorRef,
+//                            rating: rating
+//                        )
+//                        posts.append(post)
+//                    }
+//                    group.leave()
+//                }
+//            }
+//            
+//            posts.sort { $0.timestamp > $1.timestamp }
+//            group.notify(queue: .main) {
+//                completion(posts)
+//            }
+//        }
+//    }
 }
 
 extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
