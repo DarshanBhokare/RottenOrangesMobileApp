@@ -14,10 +14,10 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
     
     private var posts: [Post] = []
     private var filteredPosts: [Post] = []
+    private var isDataLoaded = false // Flag to track if data is already loaded
     
     override func loadView() {
         view = feedViewScreen
-        reloadTableData()
     }
     
     override func viewDidLoad() {
@@ -29,12 +29,26 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
         feedViewScreen.tableView.delegate = self
         feedViewScreen.tableView.dataSource = self
         feedViewScreen.searchBar.delegate = self
+        
+        setupTableView()
+        reloadTableData() // Load data initially
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Ensure table view delegate and data source are reassigned
+        feedViewScreen.tableView.delegate = self
+        feedViewScreen.tableView.dataSource = self
     }
     
     func reloadTableData() {
+        guard !isDataLoaded else { return } // Avoid reloading if data is already loaded
         fetchPosts { [weak self] fetchedPosts in
             self?.posts = fetchedPosts
-            self?.feedViewScreen.tableView.reloadData()
+            self?.isDataLoaded = true
+            DispatchQueue.main.async {
+                self?.feedViewScreen.tableView.reloadData()
+            }
         }
     }
     
@@ -43,14 +57,12 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
             return true
         }
 
-        // Calculate the new text after the replacement
         let currentText = textField.text ?? ""
         guard let newTextRange = Range(range, in: currentText) else {
             return true
         }
         let newText = currentText.replacingCharacters(in: newTextRange, with: string)
         
-        // Show or hide suggestions based on the new text
         if !newText.isEmpty {
             showPosts(for: newText)
         } else {
@@ -62,12 +74,8 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
     
     func showPosts(for text: String) {
         filteredPosts = posts.filter { post in
-            // Check if any tag starts with the search text
             let matchesTags = post.tags.contains { $0.lowercased().starts(with: text.lowercased()) }
-            // Check if the title contains the search text
             let matchesTitle = post.title.lowercased().contains(text.lowercased())
-            
-            // Return true if either condition is true
             return matchesTags || matchesTitle
         }
         
@@ -76,7 +84,8 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
     }
 
     func hidePosts() {
-        // Implement later
+        filteredPosts.removeAll()
+        feedViewScreen.tableView.reloadData()
     }
     
     private func setupTableView() {
@@ -101,7 +110,6 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
             var posts = [Post]()
             let group = DispatchGroup()
             
-            // Fetch posts for each followed author
             for authorRef in follows {
                 group.enter()
                 db.collection("posts").whereField("authorRef", isEqualTo: authorRef).getDocuments { querySnapshot, error in
@@ -141,9 +149,7 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
                 }
             }
             
-            // Sort posts by timestamp in descending order
             posts.sort { $0.timestamp > $1.timestamp }
-            self.reloadTableData()
             group.notify(queue: .main) {
                 completion(posts)
             }
@@ -153,20 +159,13 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
 
 extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if feedViewScreen.searchBar.text?.isEmpty ?? true {
-            return posts.count
-        } else {
-            return filteredPosts.count
-        }
+        return feedViewScreen.searchBar.text?.isEmpty ?? true ? posts.count : filteredPosts.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Authpost", for: indexPath) as! FeedTableViewCell
+        let post = feedViewScreen.searchBar.text?.isEmpty ?? true ? posts[indexPath.row] : filteredPosts[indexPath.row]
         
-        // Determine whether to use posts or filteredPosts
-        let post = (feedViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
-        
-        // Fetch the user by post.authorRef
         post.authorRef.getDocument { documentSnapshot, error in
             if let error = error {
                 print("Error fetching author details for \(post.author): \(error.localizedDescription)")
@@ -184,8 +183,7 @@ extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let selectedPost = (feedViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
-        print("displaying \(selectedPost)")
+        let selectedPost = feedViewScreen.searchBar.text?.isEmpty ?? true ? posts[indexPath.row] : filteredPosts[indexPath.row]
         displayReview(review: selectedPost)
     }
     
