@@ -161,18 +161,16 @@ extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
         
         // Determine whether to use posts or filteredPosts
         let post = (exploreViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
+        cell.post = post
         
         // Fetch the user by post.author
         AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
             if let error = error {
-                // Handle error (e.g., log it or display an alert)
                 print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
-                // Configure the cell with the post only
                 DispatchQueue.main.async {
-                    cell.configure(with: post, author:nil, at: indexPath)
+                    cell.configure(with: post, author: nil, at: indexPath)
                 }
             } else if let userDetails = userDetails {
-                // Pass the user details to the configure method
                 DispatchQueue.main.async {
                     cell.configure(with: post, author: userDetails, at: indexPath)
                 }
@@ -181,6 +179,7 @@ extension ExploreViewController: UITableViewDataSource, UITableViewDelegate {
         
         return cell
     }
+
 
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -205,11 +204,11 @@ extension ExploreViewController: ExploreTableViewCellDelegate {
     func followButtonTapped(for post: Post) {
         // Fetch post data for the specific post
         print("Follow button tapped for post: \(post)")
-        AuthModel().followPost(for: post.title) { error in
+        AuthModel().followUser(for: post.authorRef) { error in
             if let error = error {
-                print("Error following post: \(error.localizedDescription)")
+                print("Error following reviewer: \(error.localizedDescription)")
             } else {
-                print("Successfully followed post: \(post.title)")
+                print("Successfully followed reviewer: \(post.author)")
                 DispatchQueue.main.async {
                     if let visibleIndexPaths = self.exploreViewScreen.tableView.indexPathsForVisibleRows {
                         for indexPath in visibleIndexPaths {

@@ -7,12 +7,13 @@
 
 import Foundation
 import UIKit
+import FirebaseFirestore
 
 struct User{
     var id: String?
     var name:String?
     var email:String?
-    var followedCritics: [String]?
+    var followedCritics: [DocumentReference]?
     var rating: Double
     
     
@@ -21,7 +22,7 @@ struct User{
          id: String? = nil,
          name: String? = nil,
          email: String? = nil,
-         followedCritics: [String] = [],
+         followedCritics: [DocumentReference]? = [],
          rating: Double? = 0.0
          ) {
         self.id = id;

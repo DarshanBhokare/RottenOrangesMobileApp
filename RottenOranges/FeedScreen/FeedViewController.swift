@@ -17,9 +17,7 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
     
     override func loadView() {
         view = feedViewScreen
-
         reloadTableData()
-
     }
     
     override func viewDidLoad() {
@@ -30,20 +28,17 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
         
         feedViewScreen.tableView.delegate = self
         feedViewScreen.tableView.dataSource = self
-        feedViewScreen.searchBar.delegate=self
-
+        feedViewScreen.searchBar.delegate = self
     }
     
     func reloadTableData() {
-            fetchPosts { [weak self] fetchedPosts in
-                self?.posts = fetchedPosts
-                self?.feedViewScreen.tableView.reloadData()
-            }
+        fetchPosts { [weak self] fetchedPosts in
+            self?.posts = fetchedPosts
+            self?.feedViewScreen.tableView.reloadData()
         }
-    
+    }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        
         guard textField == feedViewScreen.searchBar else {
             return true
         }
@@ -76,10 +71,7 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
             return matchesTags || matchesTitle
         }
         
-        // Reload the data of the picker view
         feedViewScreen.tableView.reloadData()
-        
-        // Show the picker view
         feedViewScreen.tableView.isHidden = false
     }
 
@@ -91,7 +83,7 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
         feedViewScreen.tableView.register(FeedTableViewCell.self, forCellReuseIdentifier: "Authpost")
     }
     
-    
+    // Fetch posts based on followed authors
     func fetchPosts(completion: @escaping ([Post]) -> Void) {
         AuthModel().getCurrentUserDetails { userDetails, error in
             guard error == nil else {
@@ -100,56 +92,67 @@ class FeedViewController: UIViewController, UITextFieldDelegate {
                 return
             }
             
-            let follows = userDetails["follows"] as? [String] ?? []
-            
-            if follows.isEmpty {
-                // If follows array is empty, call the completion handler with an empty array
-                completion([])
+            guard let follows = userDetails["follows"] as? [DocumentReference], !follows.isEmpty else {
+                completion([]) // No follows, return empty array
                 return
             }
             
             let db = Firestore.firestore()
             var posts = [Post]()
+            let group = DispatchGroup()
             
-            // Fetch posts where the title is in the follows list
-            db.collection("posts").whereField("title", in: follows).getDocuments { (querySnapshot, error) in
-                if let error = error {
-                    print("Error fetching posts: \(error.localizedDescription)")
-                    completion([])
-                    return
-                }
-                
-                for document in querySnapshot!.documents {
-                    let data = document.data()
-                    let title = data["title"] as? String ?? ""
-                    let content = data["content"] as? String ?? ""
-                    let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                    let imageUrl = data["image"] as? String ?? ""
-                    let tags = data["tags"] as? [String] ?? []
-                    let author = data["author"] as? String ?? ""
-                    guard let authorRef = data["authorRef"] as? DocumentReference else {
-                        print("Skipping post '\(title)' due to missing authorRef.")
-                        continue
+            // Fetch posts for each followed author
+            for authorRef in follows {
+                group.enter()
+                db.collection("posts").whereField("authorRef", isEqualTo: authorRef).getDocuments { querySnapshot, error in
+                    if let error = error {
+                        print("Error fetching posts for author \(authorRef.path): \(error.localizedDescription)")
+                        group.leave()
+                        return
                     }
-                    let rating = data["rating"] as? Double ?? 0.0
                     
-                    let post = Post(title: title, content: content, timestamp: timestamp, image: imageUrl, tags:tags, author:author, authorRef: authorRef, rating: rating)
-                    posts.append(post)
+                    for document in querySnapshot?.documents ?? [] {
+                        let data = document.data()
+                        let title = data["title"] as? String ?? ""
+                        let content = data["content"] as? String ?? ""
+                        let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                        let imageUrl = data["image"] as? String ?? ""
+                        let tags = data["tags"] as? [String] ?? []
+                        let author = data["author"] as? String ?? ""
+                        guard let authorRef = data["authorRef"] as? DocumentReference else {
+                            print("Skipping post '\(title)' due to missing authorRef.")
+                            continue
+                        }
+                        let rating = data["rating"] as? Double ?? 0.0
+                        
+                        let post = Post(
+                            title: title,
+                            content: content,
+                            timestamp: timestamp,
+                            image: imageUrl,
+                            tags: tags,
+                            author: author,
+                            authorRef: authorRef,
+                            rating: rating
+                        )
+                        posts.append(post)
+                    }
+                    group.leave()
                 }
-                
+            }
+            
+            group.notify(queue: .main) {
                 completion(posts)
             }
         }
     }
-
 }
 
-extension FeedViewController: UITableViewDataSource,UITableViewDelegate {
+extension FeedViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if feedViewScreen.searchBar.text?.isEmpty ?? true{
+        if feedViewScreen.searchBar.text?.isEmpty ?? true {
             return posts.count
-        }
-        else{
+        } else {
             return filteredPosts.count
         }
     }
@@ -160,39 +163,26 @@ extension FeedViewController: UITableViewDataSource,UITableViewDelegate {
         // Determine whether to use posts or filteredPosts
         let post = (feedViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
         
-        // Fetch the user by post.author
-        AuthModel().getUserByDocumentReference(userRef: post.authorRef) { userDetails, documentId, error in
+        // Fetch the user by post.authorRef
+        post.authorRef.getDocument { documentSnapshot, error in
             if let error = error {
-                // Handle error (e.g., log it or display an alert)
-                print("Error fetching user details for author \(post.author): \(error.localizedDescription)")
-                // Configure the cell with the post only
+                print("Error fetching author details for \(post.author): \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     cell.configure(with: post, author: nil, at: indexPath)
                 }
-            } else if let userDetails = userDetails {
-                // Pass the user details to the configure method
+            } else if let data = documentSnapshot?.data() {
                 DispatchQueue.main.async {
-                    cell.configure(with: post, author: userDetails, at: indexPath)
+                    cell.configure(with: post, author: data, at: indexPath)
                 }
             }
         }
         
         return cell
     }
-
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-
-        print(self.posts[indexPath.row]);
-        
-        if feedViewScreen.searchBar.text?.isEmpty ?? true {
-            // If search text is empty, use posts array
-            displayReview(review: posts[indexPath.row])
-        } else {
-            // If search text is not empty, use filteredPosts array
-            displayReview(review: filteredPosts[indexPath.row])
-        }
-
+        let selectedPost = (feedViewScreen.searchBar.text?.isEmpty ?? true) ? posts[indexPath.row] : filteredPosts[indexPath.row]
+        displayReview(review: selectedPost)
     }
     
     private func displayReview(review: Post) {

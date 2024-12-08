@@ -365,6 +365,11 @@ extension RegisterViewController: UIPickerViewDataSource, UIPickerViewDelegate {
     }
 
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        guard row >= 0 && row < filteredSuggestions.count else {
+            print("Error: Selected row \(row) is out of bounds.")
+            return
+        }
+
         let selectedSuggestion = filteredSuggestions[row]
         print("Selected suggestion: \(selectedSuggestion)")
         
@@ -374,5 +379,6 @@ extension RegisterViewController: UIPickerViewDataSource, UIPickerViewDelegate {
         // Hide the picker view after selecting a suggestion
         hideSuggestions()
     }
+
 }
 

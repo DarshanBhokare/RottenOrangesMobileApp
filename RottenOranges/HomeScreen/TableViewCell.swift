@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseFirestore
 
 protocol ExploreTableViewCellDelegate: AnyObject {
     func followButtonTapped(for post: Post)
@@ -147,16 +148,17 @@ class ExploreTableViewCell: UITableViewCell {
     }
     
     @objc func followButtonTapped() {
+        
         if let post = post {
             delegate?.followButtonTapped(for: post)
         }
     }
 
     func configure(with post: Post, author: [String: Any]? = nil, at indexPath: IndexPath) {
-
         labelTitle.text = post.title
         labelTimestamp.text = formatDate(post.timestamp)
         labelTags.text = post.tags.joined(separator: ", ")
+        
         if let author = author {
             createdByLabel.text = "Created By \(author["name"] as? String ?? "Unknown Author")"
             if let rating = author["rating"] as? Double {
@@ -168,36 +170,39 @@ class ExploreTableViewCell: UITableViewCell {
             createdByLabel.text = "Created By Unknown Author"
             authorRating.text = "Author's Reputation: Not Available"
         }
+        
         if let imageUrl = URL(string: post.image) {
             loadImage(from: imageUrl)
         } else {
             imageProfile.image = UIImage(systemName: "person")
         }
         
-        // Check if the post is followed by the current user
+        // Check if the post is followed by the current user using DocumentReference
         AuthModel().getCurrentUserDetails { userDetails, error in
             if let error = error {
                 print("Error fetching current user details: \(error.localizedDescription)")
                 return
             }
             
-            let follows = userDetails["follows"] as? [String] ?? []
+            guard let follows = userDetails["follows"] as? [DocumentReference] else {
+                print("No follows found or invalid format")
+                return
+            }
             
             DispatchQueue.main.async {
-                if follows.contains(post.title) {
+                if follows.contains(post.authorRef) {
                     self.followButton.setTitle("Following", for: .normal)
                     self.followButton.isEnabled = false // Disable the button
-                    // Optionally, you can update the button's appearance
                     self.followButton.setTitleColor(.gray, for: .normal)
                 } else {
                     self.followButton.setTitle("Follow", for: .normal)
                     self.followButton.isEnabled = true // Enable the button
-                    // Optionally, you can update the button's appearance
                     self.followButton.setTitleColor(.blue, for: .normal)
                 }
             }
         }
     }
+
 
     private func loadImage(from url: URL) {
         let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
